@@ -116,9 +116,9 @@
     .filter-count { font-size: 0.7rem; opacity: 0.7; margin-left: 4px; }
     .map-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin: 4px 0; font-size: 0.8rem; }
     .map-legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-    .legend-dot-active { background: #22c55e; border: 2px solid #16a34a; }
-    .legend-dot-inactive { background: #94a3b8; border: 2px solid #64748b; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 2px solid rgba(0,0,0,0.1); }
+    .legend-dot-active { background: #22c55e; border-color: #16a34a; }
+    .legend-dot-inactive { background: #ef4444; border-color: #dc2626; }
     .radius-filter { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin: 4px 0; }
     .radius-filter label { font-size: 0.85rem; font-weight: 500; color: #475569; }
     .radius-filter input[type="range"] { width: 150px; accent-color: #2563eb; }
@@ -135,6 +135,8 @@
     .google-maps-btn { background: #34a853; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
     .google-maps-btn:hover { background: #1e7e34; }
     .nav-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
+    .marker-active { background: #22c55e; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .marker-inactive { background: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } .radius-filter input[type="range"] { width: 100px; } .radius-filter input[type="number"] { width: 70px; } }
   </style>
 </head>
@@ -441,16 +443,12 @@
       return;
     }
     
-    // Check if on mobile or desktop
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    // Waze URL schemes
     const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
     const wazeAppUrl = `waze://?ll=${lat},${lng}&navigate=yes`;
     
     try {
       if (isMobile) {
-        // Try to open Waze app first
         const appLink = document.createElement('a');
         appLink.href = wazeAppUrl;
         appLink.target = '_blank';
@@ -458,9 +456,7 @@
         appLink.click();
         document.body.removeChild(appLink);
         
-        // Fallback to web if app doesn't open
         setTimeout(() => {
-          // If app didn't open, try web version
           const webLink = document.createElement('a');
           webLink.href = wazeUrl;
           webLink.target = '_blank';
@@ -469,20 +465,17 @@
           document.body.removeChild(webLink);
         }, 2000);
       } else {
-        // On desktop, open web version
         window.open(wazeUrl, '_blank');
       }
       
       showToast(`🗺️ Opening Waze to ${businessName || 'location'}`, 3000);
       debugLog(`Opening Waze to: ${lat}, ${lng}`);
     } catch (e) {
-      // Fallback to web version
       window.open(wazeUrl, '_blank');
       showToast(`🗺️ Opening Waze web version`, 3000);
     }
   }
 
-  // GOOGLE MAPS NAVIGATION FUNCTION
   function navigateWithGoogleMaps(lat, lng, businessName) {
     if (!lat || !lng) {
       showToast('❌ No coordinates available for this customer', 3000);
@@ -1497,7 +1490,8 @@
           const statusEmoji = status === 'active' ? '🟢' : '🔴';
           const statusText = status === 'active' ? 'Active' : 'Inactive';
           
-          const markerColor = status === 'active' ? '#22c55e' : '#94a3b8';
+          // Different colors for active (green) and inactive (red)
+          const markerColor = status === 'active' ? '#22c55e' : '#ef4444';
           const markerIcon = L.divIcon({
             className: 'custom-marker',
             html: `<div style="background:${markerColor}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
