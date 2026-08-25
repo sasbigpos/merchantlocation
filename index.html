@@ -34,6 +34,8 @@
     .btn-success { background: #22c55e; color: white; border: none; }
     .btn-success:hover { background: #16a34a; }
     .btn-sm { padding: 6px 14px; font-size: 0.85rem; width: auto; }
+    .btn-warning { background: #f59e0b; color: white; border: none; }
+    .btn-warning:hover { background: #d97706; }
     .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .mt-2 { margin-top: 12px; }
@@ -41,8 +43,8 @@
     .text-sm { font-size: 0.9rem; color: #475569; }
     .badge { background: #e2e8f0; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 600; }
     #map { height: 350px; width: 100%; border-radius: 20px; border: 1px solid #e2e8f0; margin: 16px 0; background: #f0f0f0; }
-    .customer-item { background: #f8fafc; border-radius: 18px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid #3b82f6; cursor: pointer; transition: 0.2s; }
-    .customer-item:hover { background: #eef2ff; border-left-color: #2563eb; transform: translateX(4px); }
+    .customer-item { background: #f8fafc; border-radius: 18px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid #3b82f6; cursor: default; transition: 0.2s; }
+    .customer-item:hover { background: #eef2ff; border-left-color: #2563eb; }
     .customer-item .customer-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; width: 100%; }
     .customer-info strong { display: block; color: #0f172a; }
     .customer-info span { font-size: 0.85rem; color: #475569; display: inline-block; margin-right: 12px; }
@@ -122,8 +124,6 @@
     .radius-filter { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin: 4px 0; }
     .radius-filter label { font-size: 0.85rem; font-weight: 500; color: #475569; }
     .radius-filter input[type="range"] { width: 150px; accent-color: #2563eb; }
-    .radius-filter .radius-value { font-weight: 600; color: #2563eb; min-width: 60px; }
-    .radius-filter .radius-unit { font-size: 0.8rem; color: #64748b; }
     .radius-filter input[type="number"] { width: 80px; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 30px; font-size: 0.9rem; text-align: center; }
     .radius-filter input[type="number"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
     .radius-clear-btn { background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; }
@@ -134,10 +134,47 @@
     .waze-btn:hover { background: #1a8cbf; }
     .google-maps-btn { background: #34a853; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
     .google-maps-btn:hover { background: #1e7e34; }
-    .nav-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
-    .marker-active { background: #22c55e; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-    .marker-inactive { background: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-    @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } .radius-filter input[type="range"] { width: 100px; } .radius-filter input[type="number"] { width: 70px; } }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid #e2e8f0; margin-top: 12px; }
+    .pagination button { background: white; border: 1px solid #d1d5db; padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+    .pagination button:hover:not(:disabled) { background: #eef2ff; border-color: #3b82f6; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination .page-info { font-size: 0.85rem; color: #475569; }
+    .pagination .page-numbers { display: flex; gap: 4px; flex-wrap: wrap; }
+    .pagination .page-numbers button { min-width: 36px; text-align: center; padding: 6px 10px; }
+    .pagination .page-numbers button.active-page { background: #2563eb; color: white; border-color: #2563eb; }
+    .pagination .page-numbers button.active-page:hover { background: #1d4ed8; }
+    .items-per-page { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569; }
+    .items-per-page select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 30px; font-size: 0.8rem; background: white; cursor: pointer; }
+    .items-per-page select:focus { outline: none; border-color: #3b82f6; }
+    .edit-btn { background: #f59e0b; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .edit-btn:hover { background: #d97706; }
+    /* Edit Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; display: none; justify-content: center; align-items: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: white; border-radius: 28px; padding: 24px; max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; z-index: 9999; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal h3 { margin-bottom: 16px; color: #1e293b; }
+    .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .modal .input-group { margin-bottom: 12px; }
+    .modal .input-group label { font-size: 0.8rem; font-weight: 500; color: #334155; display: block; margin-bottom: 4px; }
+    .modal .input-group input, .modal .input-group textarea, .modal .input-group select { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 0.9rem; transition: 0.2s; font-family: inherit; background: white; }
+    .modal .input-group textarea { border-radius: 16px; resize: vertical; min-height: 50px; }
+    .modal .input-group input:focus, .modal .input-group textarea:focus, .modal .input-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .modal .modal-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .modal .modal-actions button { padding: 10px 24px; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; border: none; }
+    .modal .modal-actions .btn-save { background: #22c55e; color: white; }
+    .modal .modal-actions .btn-save:hover { background: #16a34a; }
+    .modal .modal-actions .btn-cancel { background: #e2e8f0; color: #1e293b; }
+    .modal .modal-actions .btn-cancel:hover { background: #cbd5e1; }
+    .modal .modal-actions .btn-geocode-modal { background: #3b82f6; color: white; }
+    .modal .modal-actions .btn-geocode-modal:hover { background: #2563eb; }
+    .modal .coord-row { display: flex; gap: 8px; align-items: center; }
+    .modal .coord-row input { flex: 1; }
+    .modal .coord-row .coord-label { font-size: 0.8rem; color: #64748b; }
+    .modal .close-modal-btn { float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
+    .modal .close-modal-btn:hover { color: #1e293b; }
+    .modal .geocode-status-modal { font-size: 0.8rem; padding: 4px 12px; border-radius: 30px; margin-top: 4px; display: inline-block; }
+    @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } .radius-filter input[type="range"] { width: 100px; } .radius-filter input[type="number"] { width: 70px; } .pagination .page-numbers button { min-width: 30px; padding: 4px 8px; font-size: 0.7rem; } .modal .form-row { grid-template-columns: 1fr; } .modal .form-row-3 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -325,8 +362,85 @@
     </div>
     <div id="debugBox" class="debug-box"></div>
 
-    <div id="customerList" class="mt-2">
-      <div class="text-sm" style="color:#64748b;">No customers loaded. Import CSV or add manually.</div>
+    <!-- Customer List with Pagination -->
+    <div id="customerListWrapper">
+      <div id="customerList" class="mt-2">
+        <div class="text-sm" style="color:#64748b;">No customers loaded. Import CSV or add manually.</div>
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div id="paginationControls" class="pagination" style="display:none;">
+        <button id="prevPageBtn"><i class="fas fa-chevron-left"></i> Previous</button>
+        <div class="page-numbers" id="pageNumbers"></div>
+        <button id="nextPageBtn">Next <i class="fas fa-chevron-right"></i></button>
+        <div class="items-per-page">
+          <label>Show:</label>
+          <select id="itemsPerPageSelect">
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+            <option value="1000">All</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal">
+    <button class="close-modal-btn" onclick="closeEditModal()">✕</button>
+    <h3><i class="fas fa-edit"></i> Edit Customer</h3>
+    <div id="editForm">
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-store"></i> Business Name *</label>
+          <input type="text" id="editBusiness" placeholder="Business Name">
+        </div>
+        <div class="input-group">
+          <label><i class="far fa-user"></i> Contact Person</label>
+          <input type="text" id="editContact" placeholder="Contact Person">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-phone"></i> Phone Number</label>
+          <input type="text" id="editPhone" placeholder="Phone Number">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-toggle-on"></i> Status</label>
+          <select id="editStatus" class="status-select">
+            <option value="active">🟢 Active</option>
+            <option value="inactive">🔴 Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label><i class="fas fa-map-marker-alt"></i> Address</label>
+        <textarea id="editAddress" placeholder="Address"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-globe"></i> Latitude</label>
+          <input type="text" id="editLat" placeholder="Latitude">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-globe"></i> Longitude</label>
+          <input type="text" id="editLng" placeholder="Longitude">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin: 4px 0;">
+        <button id="editGeocodeBtn" class="btn-geocode" style="padding:6px 16px; font-size:0.85rem;"><i class="fas fa-map-pin"></i> Geocode Address</button>
+        <button id="editUseLocationBtn" class="btn-outline" style="padding:6px 16px; font-size:0.85rem; border-color:#3b82f6; color:#2563eb;"><i class="fas fa-location-arrow"></i> Use My Location</button>
+      </div>
+      <div id="editGeocodeStatus" class="geocode-status-modal geocode-pending" style="display:inline-block; margin:4px 0;">⏳ Enter address and click geocode</div>
+      <div class="modal-actions">
+        <button class="btn-save" id="saveEditBtn"><i class="fas fa-save"></i> Save Changes</button>
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -410,6 +524,31 @@
   const radiusCount = document.getElementById('radiusCount');
   const clearRadiusBtn = document.getElementById('clearRadiusBtn');
   const applyRadiusBtn = document.getElementById('applyRadiusBtn');
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+  const pageNumbers = document.getElementById('pageNumbers');
+  const paginationControls = document.getElementById('paginationControls');
+  const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+
+  // Edit Modal refs
+  const editModal = document.getElementById('editModal');
+  const editBusiness = document.getElementById('editBusiness');
+  const editContact = document.getElementById('editContact');
+  const editPhone = document.getElementById('editPhone');
+  const editAddress = document.getElementById('editAddress');
+  const editLat = document.getElementById('editLat');
+  const editLng = document.getElementById('editLng');
+  const editStatus = document.getElementById('editStatus');
+  const editGeocodeBtn = document.getElementById('editGeocodeBtn');
+  const editUseLocationBtn = document.getElementById('editUseLocationBtn');
+  const editGeocodeStatus = document.getElementById('editGeocodeStatus');
+  const saveEditBtn = document.getElementById('saveEditBtn');
+  let editingCustomerId = null;
+
+  // Pagination state
+  let currentPage = 1;
+  let itemsPerPage = 50;
+  let totalPages = 1;
 
   // Filter state
   let currentFilter = 'all';
@@ -436,17 +575,15 @@
     }
   });
 
-  // WAZE NAVIGATION FUNCTION
+  // Navigation functions
   function navigateWithWaze(lat, lng, businessName) {
     if (!lat || !lng) {
       showToast('❌ No coordinates available for this customer', 3000);
       return;
     }
-    
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
     const wazeAppUrl = `waze://?ll=${lat},${lng}&navigate=yes`;
-    
     try {
       if (isMobile) {
         const appLink = document.createElement('a');
@@ -455,7 +592,6 @@
         document.body.appendChild(appLink);
         appLink.click();
         document.body.removeChild(appLink);
-        
         setTimeout(() => {
           const webLink = document.createElement('a');
           webLink.href = wazeUrl;
@@ -467,12 +603,9 @@
       } else {
         window.open(wazeUrl, '_blank');
       }
-      
       showToast(`🗺️ Opening Waze to ${businessName || 'location'}`, 3000);
-      debugLog(`Opening Waze to: ${lat}, ${lng}`);
     } catch (e) {
       window.open(wazeUrl, '_blank');
-      showToast(`🗺️ Opening Waze web version`, 3000);
     }
   }
 
@@ -481,19 +614,18 @@
       showToast('❌ No coordinates available for this customer', 3000);
       return;
     }
-    
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
     window.open(googleMapsUrl, '_blank');
     showToast(`🗺️ Opening Google Maps to ${businessName || 'location'}`, 3000);
-    debugLog(`Opening Google Maps to: ${lat}, ${lng}`);
   }
 
-  // ----- FILTER FUNCTIONS -----
+  // Filter functions
   function setFilter(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.filter === filter);
     });
+    currentPage = 1;
     applyFilters();
   }
 
@@ -501,11 +633,10 @@
     let value = parseFloat(radiusInput.value);
     if (isNaN(value) || value < 0) value = 0;
     if (value > 999) value = 999;
-    
     currentRadius = value;
     radiusSlider.value = Math.min(value, 100);
     radiusInput.value = value;
-    
+    currentPage = 1;
     if (currentRadius === 0) {
       radiusCount.textContent = '';
     }
@@ -513,8 +644,7 @@
   }
 
   radiusSlider.addEventListener('input', function() {
-    const value = parseFloat(this.value);
-    radiusInput.value = value;
+    radiusInput.value = parseFloat(this.value);
   });
 
   radiusInput.addEventListener('change', function() {
@@ -526,9 +656,7 @@
   });
 
   radiusInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      applyRadius();
-    }
+    if (e.key === 'Enter') applyRadius();
   });
 
   applyRadiusBtn.addEventListener('click', applyRadius);
@@ -538,19 +666,39 @@
     radiusInput.value = 0;
     currentRadius = 0;
     radiusCount.textContent = '';
+    currentPage = 1;
     applyFilters();
     showToast('✅ Radius filter cleared', 2000);
   });
 
+  // Items per page change
+  itemsPerPageSelect.addEventListener('change', function() {
+    const value = parseInt(this.value);
+    itemsPerPage = value === 1000 ? Infinity : value;
+    currentPage = 1;
+    renderCustomers();
+  });
+
+  // Pagination functions
+  function goToPage(page) {
+    const filtered = getFilteredCustomers();
+    totalPages = Math.ceil(filtered.length / (itemsPerPage === Infinity ? filtered.length : itemsPerPage));
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    currentPage = page;
+    renderCustomers();
+  }
+
+  prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
+  nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
+
   function getFilteredCustomers() {
     let filtered = customers;
-    
     if (currentFilter === 'active') {
       filtered = filtered.filter(c => c.status === 'active');
     } else if (currentFilter === 'inactive') {
       filtered = filtered.filter(c => c.status === 'inactive');
     }
-    
     if (currentRadius > 0 && currentPosition) {
       filtered = filtered.filter(c => {
         if (!c.lat || !c.lng || isNaN(c.lat) || isNaN(c.lng)) return false;
@@ -558,13 +706,11 @@
         return dist <= currentRadius;
       });
     }
-    
     return filtered;
   }
 
   function applyFilters() {
     const filtered = getFilteredCustomers();
-    
     if (currentRadius > 0 && currentPosition) {
       radiusCount.textContent = `${filtered.length} customers within ${currentRadius}km`;
     } else if (currentRadius > 0 && !currentPosition) {
@@ -572,10 +718,163 @@
     } else {
       radiusCount.textContent = '';
     }
-    
     renderCustomers();
     updateMapMarkers();
   }
+
+  // ----- EDIT CUSTOMER FUNCTIONS -----
+  function openEditModal(customerId) {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) {
+      showToast('Customer not found', 2000);
+      return;
+    }
+    
+    editingCustomerId = customerId;
+    editBusiness.value = customer.business || '';
+    editContact.value = customer.contact || '';
+    editPhone.value = customer.phone || '';
+    editAddress.value = customer.address || '';
+    editLat.value = customer.lat || '';
+    editLng.value = customer.lng || '';
+    editStatus.value = customer.status || 'active';
+    editGeocodeStatus.textContent = '⏳ Edit and click geocode if needed';
+    editGeocodeStatus.className = 'geocode-status-modal geocode-pending';
+    
+    editModal.classList.add('show');
+    debugLog(`Opened edit modal for: ${customer.business}`);
+  }
+
+  function closeEditModal() {
+    editModal.classList.remove('show');
+    editingCustomerId = null;
+  }
+
+  // Edit Geocode
+  editGeocodeBtn.addEventListener('click', async function() {
+    const address = editAddress.value.trim();
+    if (!address) {
+      showToast('Please enter an address first', 2000);
+      return;
+    }
+    
+    editGeocodeBtn.disabled = true;
+    editGeocodeBtn.innerHTML = '<span class="loading-spinner">⟳</span> Geocoding...';
+    editGeocodeStatus.textContent = '⏳ Geocoding...';
+    editGeocodeStatus.className = 'geocode-status-modal geocode-pending';
+    
+    try {
+      const coords = await geocodeWithRetry(address);
+      if (coords) {
+        editLat.value = coords.lat.toFixed(6);
+        editLng.value = coords.lng.toFixed(6);
+        editGeocodeStatus.textContent = `✅ Found: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+        editGeocodeStatus.className = 'geocode-status-modal geocode-success';
+        showToast('✅ Address geocoded successfully!', 2000);
+      } else {
+        editGeocodeStatus.textContent = '❌ Geocode failed. Enter coordinates manually.';
+        editGeocodeStatus.className = 'geocode-status-modal geocode-failed';
+        showToast('❌ Geocode failed. Enter coordinates manually.', 3000);
+      }
+    } catch (e) {
+      editGeocodeStatus.textContent = '❌ Error: ' + e.message;
+      editGeocodeStatus.className = 'geocode-status-modal geocode-failed';
+      showToast('❌ Geocode error', 3000);
+    }
+    
+    editGeocodeBtn.disabled = false;
+    editGeocodeBtn.innerHTML = '<i class="fas fa-map-pin"></i> Geocode Address';
+  });
+
+  // Edit Use My Location
+  editUseLocationBtn.addEventListener('click', function() {
+    if (currentPosition) {
+      editLat.value = currentPosition.lat.toFixed(6);
+      editLng.value = currentPosition.lng.toFixed(6);
+      editGeocodeStatus.textContent = '📍 Using your current location';
+      editGeocodeStatus.className = 'geocode-status-modal geocode-success';
+      showToast('📍 Location set to your current position', 2000);
+    } else {
+      showToast('❌ Current location not available. Please enable GPS.', 3000);
+    }
+  });
+
+  // Save Edit
+  saveEditBtn.addEventListener('click', async function() {
+    if (!editingCustomerId) {
+      showToast('No customer selected', 2000);
+      return;
+    }
+    
+    const business = editBusiness.value.trim();
+    const address = editAddress.value.trim();
+    const lat = parseFloat(editLat.value);
+    const lng = parseFloat(editLng.value);
+    const status = editStatus.value || 'active';
+    
+    if (!business) {
+      showToast('❌ Business name is required', 2000);
+      return;
+    }
+    
+    if (!address) {
+      showToast('❌ Address is required', 2000);
+      return;
+    }
+    
+    if (!lat || isNaN(lat) || !lng || isNaN(lng)) {
+      showToast('❌ Please enter valid coordinates', 2000);
+      return;
+    }
+    
+    saveEditBtn.disabled = true;
+    saveEditBtn.innerHTML = '<span class="loading-spinner">⟳</span> Saving...';
+    
+    try {
+      await db.collection('customers').doc(editingCustomerId).update({
+        business: business,
+        contact: editContact.value.trim(),
+        phone: editPhone.value.trim(),
+        address: address,
+        lat: lat,
+        lng: lng,
+        status: status,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // Update local data
+      const customer = customers.find(c => c.id === editingCustomerId);
+      if (customer) {
+        customer.business = business;
+        customer.contact = editContact.value.trim();
+        customer.phone = editPhone.value.trim();
+        customer.address = address;
+        customer.lat = lat;
+        customer.lng = lng;
+        customer.status = status;
+      }
+      
+      showToast(`✅ Customer updated: ${business}`, 3000);
+      debugLog(`Updated customer: ${business}`);
+      closeEditModal();
+      applyFilters();
+      updateMapMarkers();
+      
+    } catch (e) {
+      showToast('❌ Failed to update customer: ' + e.message, 3000);
+      debugLog(`Update error: ${e.message}`, true);
+    }
+    
+    saveEditBtn.disabled = false;
+    saveEditBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+  });
+
+  // Close modal on overlay click
+  editModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeEditModal();
+    }
+  });
 
   // ----- MAP SETUP -----
   let map = null;
@@ -607,6 +906,13 @@
           geocodeStatus.className = 'geocode-result geocode-success';
           showToast('📍 Location set from map!', 2000);
         }
+        if (editModal.classList.contains('show')) {
+          editLat.value = e.latlng.lat.toFixed(6);
+          editLng.value = e.latlng.lng.toFixed(6);
+          editGeocodeStatus.textContent = '📍 Location selected on map';
+          editGeocodeStatus.className = 'geocode-status-modal geocode-success';
+          showToast('📍 Location set from map!', 2000);
+        }
       });
       
       setTimeout(() => { if (map) map.invalidateSize(); }, 300);
@@ -632,7 +938,6 @@
       userMarker = L.marker([currentPosition.lat, currentPosition.lng], { icon: userIcon })
         .addTo(map)
         .bindPopup('<b>📍 You are here</b>');
-      
       updateRadiusCircle();
     } catch(e) { debugLog(`User marker error: ${e.message}`, true); }
   }
@@ -642,7 +947,6 @@
       map.removeLayer(radiusCircle);
       radiusCircle = null;
     }
-    
     if (currentRadius > 0 && currentPosition) {
       radiusCircle = L.circle([currentPosition.lat, currentPosition.lng], {
         radius: currentRadius * 1000,
@@ -655,7 +959,6 @@
     }
   }
 
-  // Map controls
   zoomInBtn.addEventListener('click', () => { if (map) map.zoomIn(); });
   zoomOutBtn.addEventListener('click', () => { if (map) map.zoomOut(); });
   resetViewBtn.addEventListener('click', () => {
@@ -674,62 +977,37 @@
     }
   });
 
-  // ----- SHOW CUSTOMER ON MAP -----
   function showCustomerOnMap(customerId) {
     const customer = customers.find(c => c.id === customerId);
-    if (!customer) {
-      showToast('Customer not found', 2000);
-      return;
-    }
-    
+    if (!customer) { showToast('Customer not found', 2000); return; }
     if (!customer.lat || !customer.lng || isNaN(customer.lat) || isNaN(customer.lng)) {
       showToast('❌ This customer has no valid coordinates', 3000);
       return;
     }
-    
-    if (highlightMarker) {
-      map.removeLayer(highlightMarker);
-      highlightMarker = null;
-    }
-    
+    if (highlightMarker) { map.removeLayer(highlightMarker); highlightMarker = null; }
+    document.querySelectorAll('.customer-item').forEach(el => el.classList.remove('selected-customer'));
     document.querySelectorAll('.customer-item').forEach(el => {
-      el.classList.remove('selected-customer');
-    });
-    
-    const customerElements = document.querySelectorAll('.customer-item');
-    customerElements.forEach(el => {
       if (el.dataset.customerId === customerId) {
         el.classList.add('selected-customer');
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
-    
     selectedCustomerId = customerId;
     map.setView([customer.lat, customer.lng], 16);
-    
     const statusEmoji = customer.status === 'active' ? '🟢' : '🔴';
     const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
-    
     const highlightIcon = L.divIcon({
       className: 'highlight-marker',
       html: `<div style="background:#2563eb; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 0 0 rgba(37,99,235,0.7); animation: pulse 1.5s infinite; position:relative;">
               <div style="position:absolute; top:-10px; left:-10px; width:40px; height:40px; border-radius:50%; background:rgba(37,99,235,0.2); animation: ping 1.5s infinite;"></div>
             </div>
             <style>
-              @keyframes pulse {
-                0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.7); }
-                70% { box-shadow: 0 0 0 15px rgba(37,99,235,0); }
-                100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
-              }
-              @keyframes ping {
-                0% { transform: scale(1); opacity: 1; }
-                100% { transform: scale(2); opacity: 0; }
-              }
+              @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.7); } 70% { box-shadow: 0 0 0 15px rgba(37,99,235,0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }
+              @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
             </style>`,
       iconSize: [20, 20],
       iconAnchor: [10, 10]
     });
-    
     highlightMarker = L.marker([customer.lat, customer.lng], { icon: highlightIcon })
       .addTo(map)
       .bindPopup(`
@@ -739,18 +1017,12 @@
         <span style="font-size:0.8rem;">${statusEmoji} ${statusText}</span>
         <br><br>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button onclick="navigateWithWaze(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
-            <i class="fas fa-car"></i> Waze
-          </button>
-          <button onclick="navigateWithGoogleMaps(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
-            <i class="fas fa-map"></i> Google Maps
-          </button>
+          <button onclick="navigateWithWaze(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;"><i class="fas fa-car"></i> Waze</button>
+          <button onclick="navigateWithGoogleMaps(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;"><i class="fas fa-map"></i> Google Maps</button>
         </div>
       `)
       .openPopup();
-    
     showToast(`📍 Showing: ${customer.business} (${statusText})`, 3000);
-    debugLog(`Showing customer on map: ${customer.business}`);
   }
 
   // ----- ADD CUSTOMER FUNCTIONS -----
@@ -785,7 +1057,6 @@
     geocodeStatus.className = 'geocode-result geocode-pending';
     lastGeocodeCoords = null;
     addCustomerStatus.textContent = '';
-    document.getElementById('addCustomerStatus').style.color = '#64748b';
   }
 
   clearFormBtn.addEventListener('click', clearForm);
@@ -798,9 +1069,7 @@
       geocodeStatus.textContent = '📍 Using your current location';
       geocodeStatus.className = 'geocode-result geocode-success';
       showToast('📍 Location set to your current position', 2000);
-      if (map) {
-        map.setView([currentPosition.lat, currentPosition.lng], 15);
-      }
+      if (map) map.setView([currentPosition.lat, currentPosition.lng], 15);
     } else {
       showToast('❌ Current location not available. Please enable GPS.', 3000);
     }
@@ -808,19 +1077,13 @@
 
   geocodeAddressBtn.addEventListener('click', async () => {
     const address = newAddress.value.trim();
-    if (!address) {
-      showToast('Please enter an address first', 2000);
-      return;
-    }
-    
+    if (!address) { showToast('Please enter an address first', 2000); return; }
     geocodeAddressBtn.disabled = true;
     geocodeAddressBtn.innerHTML = '<span class="loading-spinner">⟳</span> Geocoding...';
     geocodeStatus.textContent = '⏳ Geocoding...';
     geocodeStatus.className = 'geocode-result geocode-pending';
-    
     try {
       const coords = await geocodeWithRetry(address);
-      
       if (coords) {
         newLat.value = coords.lat.toFixed(6);
         newLng.value = coords.lng.toFixed(6);
@@ -828,13 +1091,9 @@
         geocodeStatus.textContent = `✅ Found: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
         geocodeStatus.className = 'geocode-result geocode-success';
         showToast('✅ Address geocoded successfully!', 2000);
-        
         if (map) {
           map.setView([coords.lat, coords.lng], 15);
-          const tempMarker = L.marker([coords.lat, coords.lng])
-            .addTo(map)
-            .bindPopup('📍 New customer location')
-            .openPopup();
+          const tempMarker = L.marker([coords.lat, coords.lng]).addTo(map).bindPopup('📍 New customer location').openPopup();
           setTimeout(() => { map.removeLayer(tempMarker); }, 3000);
         }
       } else {
@@ -847,7 +1106,6 @@
       geocodeStatus.className = 'geocode-result geocode-failed';
       showToast('❌ Geocode error', 3000);
     }
-    
     geocodeAddressBtn.disabled = false;
     geocodeAddressBtn.innerHTML = '<i class="fas fa-map-pin"></i> Geocode';
   });
@@ -858,64 +1116,39 @@
     const lat = parseFloat(newLat.value);
     const lng = parseFloat(newLng.value);
     const status = newStatus.value || 'active';
-    
     if (!business) {
       addCustomerStatus.textContent = '❌ Please enter a business name';
-      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
       showToast('❌ Business name is required', 2000);
       return;
     }
-    
     if (!address) {
       addCustomerStatus.textContent = '❌ Please enter an address';
-      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
       showToast('❌ Address is required', 2000);
       return;
     }
-    
     if (!lat || isNaN(lat) || !lng || isNaN(lng)) {
       addCustomerStatus.textContent = '❌ Please enter valid coordinates or use Geocode/Map to set location';
-      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
       showToast('❌ Please set coordinates first', 2000);
       return;
     }
-    
     saveCustomerBtn.disabled = true;
     saveAndContinueBtn.disabled = true;
     addCustomerStatus.textContent = '⏳ Saving customer...';
-    document.getElementById('addCustomerStatus').style.color = '#475569';
-    
     const customer = {
-      business: business,
-      contact: newContact.value.trim(),
-      phone: newPhone.value.trim(),
-      address: address,
-      lat: lat,
-      lng: lng,
-      status: status,
-      createdAt: new Date().toISOString()
+      business, contact: newContact.value.trim(), phone: newPhone.value.trim(),
+      address, lat, lng, status, createdAt: new Date().toISOString()
     };
-    
     const saved = await saveCustomerToFirestore(customer);
-    
     if (saved) {
       addCustomerStatus.textContent = '✅ Customer saved successfully!';
-      document.getElementById('addCustomerStatus').style.color = '#166534';
       showToast(`✅ Added: ${business} (${status === 'active' ? '🟢 Active' : '🔴 Inactive'})`, 2000);
-      
       if (continueAdding) {
-        newBusiness.value = '';
-        newContact.value = '';
-        newPhone.value = '';
-        newAddress.value = '';
-        newLat.value = '';
-        newLng.value = '';
-        newStatus.value = 'active';
+        newBusiness.value = ''; newContact.value = ''; newPhone.value = ''; newAddress.value = '';
+        newLat.value = ''; newLng.value = ''; newStatus.value = 'active';
         geocodeStatus.textContent = '⏳ Ready for next customer...';
         geocodeStatus.className = 'geocode-result geocode-pending';
         lastGeocodeCoords = null;
         addCustomerStatus.textContent = '✅ Saved! Enter next customer.';
-        document.getElementById('addCustomerStatus').style.color = '#166534';
         newBusiness.focus();
       } else {
         addCustomerBox.classList.remove('show');
@@ -923,10 +1156,8 @@
       }
     } else {
       addCustomerStatus.textContent = '❌ Failed to save customer. Check console for errors.';
-      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
       showToast('❌ Failed to save customer', 3000);
     }
-    
     saveCustomerBtn.disabled = false;
     saveAndContinueBtn.disabled = false;
   }
@@ -934,7 +1165,6 @@
   saveCustomerBtn.addEventListener('click', () => saveCustomer(false));
   saveAndContinueBtn.addEventListener('click', () => saveCustomer(true));
 
-  // ----- Update Customer Status -----
   async function updateCustomerStatus(id, newStatus) {
     if (!currentUser) return;
     try {
@@ -944,51 +1174,31 @@
         customer.status = newStatus;
         applyFilters();
         showToast(`✅ Status updated to ${newStatus === 'active' ? '🟢 Active' : '🔴 Inactive'}`, 2000);
-        debugLog(`Customer ${customer.business} status changed to ${newStatus}`);
       }
     } catch (e) {
-      debugLog(`Status update error: ${e.message}`, true);
       showToast('❌ Failed to update status', 3000);
     }
   }
 
   // ----- GEOCODING -----
   let geocodeCache = new Map();
-  
   async function geocodeWithRetry(address, maxRetries = 3) {
     const cacheKey = address.toLowerCase().trim();
-    if (geocodeCache.has(cacheKey)) {
-      return geocodeCache.get(cacheKey);
-    }
-    
+    if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
     const cleanAddress = address.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const coords = await geocodeWithOpenStreetMap(cleanAddress);
-        if (coords) {
-          geocodeCache.set(cacheKey, coords);
-          return coords;
-        }
-        
+        if (coords) { geocodeCache.set(cacheKey, coords); return coords; }
         const parts = cleanAddress.split(' ');
         if (parts.length > 3) {
           const simplified = parts.slice(0, Math.min(parts.length, 4)).join(' ');
           const coords2 = await geocodeWithOpenStreetMap(simplified);
-          if (coords2) {
-            geocodeCache.set(cacheKey, coords2);
-            return coords2;
-          }
+          if (coords2) { geocodeCache.set(cacheKey, coords2); return coords2; }
         }
-        
-        if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, 1000 * attempt));
-        }
-      } catch (e) {
-        debugLog(`Geocode attempt ${attempt} failed: ${e.message}`, true);
-      }
+        if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1000 * attempt));
+      } catch (e) { debugLog(`Geocode attempt ${attempt} failed: ${e.message}`, true); }
     }
-    
     return null;
   }
 
@@ -997,12 +1207,8 @@
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
       const response = await fetch(url);
       const data = await response.json();
-      
       if (data && data.length > 0) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lng)
-        };
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lng) };
       }
     } catch (e) {}
     return null;
@@ -1014,73 +1220,42 @@
       showToast('No customers to fix', 2000);
       return;
     }
-
     if (!confirm(`Fix locations for ${customers.length} customers?`)) return;
-
     fixLocationsBtn.disabled = true;
     fixLocationsBtn.innerHTML = '<span class="loading-spinner">⟳</span> Fixing...';
     importStatus.style.display = 'block';
     importProgress.textContent = 'Fixing locations...';
     importProgressBar.style.width = '0%';
-    
-    let successCount = 0;
-    let failCount = 0;
-    let unchangedCount = 0;
+    let successCount = 0, failCount = 0, unchangedCount = 0;
     const total = customers.length;
-
     for (let i = 0; i < customers.length; i++) {
       const c = customers[i];
       const progress = ((i + 1) / total * 100);
       importProgressBar.style.width = progress + '%';
       importProgress.textContent = `Processing ${i+1}/${total}: ${c.business || 'Unknown'}`;
       importStats.textContent = `✅ ${successCount} fixed, ⏭️ ${unchangedCount} unchanged, ❌ ${failCount} failed`;
-
-      if (!c.address || c.address.trim() === '') {
-        unchangedCount++;
-        continue;
-      }
-
+      if (!c.address || c.address.trim() === '') { unchangedCount++; continue; }
       try {
         const coords = await geocodeWithRetry(c.address);
-        
         if (coords) {
-          const currentLat = c.lat || 0;
-          const currentLng = c.lng || 0;
+          const currentLat = c.lat || 0, currentLng = c.lng || 0;
           const diff = Math.abs(currentLat - coords.lat) + Math.abs(currentLng - coords.lng);
-          
           if (diff > 0.001) {
-            await db.collection('customers').doc(c.id).update({
-              lat: coords.lat,
-              lng: coords.lng
-            });
-            c.lat = coords.lat;
-            c.lng = coords.lng;
+            await db.collection('customers').doc(c.id).update({ lat: coords.lat, lng: coords.lng });
+            c.lat = coords.lat; c.lng = coords.lng;
             successCount++;
-          } else {
-            unchangedCount++;
-          }
-        } else {
-          failCount++;
-        }
-      } catch (e) {
-        failCount++;
-      }
-      
+          } else { unchangedCount++; }
+        } else { failCount++; }
+      } catch (e) { failCount++; }
       await new Promise(r => setTimeout(r, 500));
     }
-
     importStatus.style.display = 'none';
     fixLocationsBtn.disabled = false;
     fixLocationsBtn.innerHTML = '<i class="fas fa-wrench"></i> Fix All Locations';
-    
     loadStatus.textContent = `✅ Complete: ${successCount} fixed, ${unchangedCount} unchanged, ${failCount} failed`;
     showToast(`✅ Fixed ${successCount} locations!`, 3000);
-    
     applyFilters();
-    if (map) {
-      map.invalidateSize();
-      setTimeout(fitMarkersBtn.click, 500);
-    }
+    if (map) { map.invalidateSize(); setTimeout(fitMarkersBtn.click, 500); }
   }
 
   // ----- INIT APP -----
@@ -1096,30 +1271,22 @@
   async function loadCustomersFromFirestore() {
     if (!currentUser) return;
     try {
-      const snapshot = await db.collection('customers')
-        .where('userId', '==', currentUser.uid)
-        .get();
+      const snapshot = await db.collection('customers').where('userId', '==', currentUser.uid).get();
       customers = [];
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (!data.status) {
-          data.status = 'active';
-        }
+        if (!data.status) data.status = 'active';
         customers.push({ id: doc.id, ...data });
       });
       debugLog(`Loaded ${customers.length} customers`);
       customerCount.textContent = customers.length;
       applyFilters();
-    } catch (e) {
-      debugLog(`Load error: ${e.message}`, true);
-    }
+    } catch (e) { debugLog(`Load error: ${e.message}`, true); }
   }
 
   async function saveCustomerToFirestore(customer) {
     if (!currentUser) return false;
-    if (!customer.status) {
-      customer.status = 'active';
-    }
+    if (!customer.status) customer.status = 'active';
     const data = { ...customer, userId: currentUser.uid };
     try {
       const docRef = await db.collection('customers').add(data);
@@ -1128,10 +1295,7 @@
       customerCount.textContent = customers.length;
       applyFilters();
       return true;
-    } catch (e) { 
-      debugLog(`Save error: ${e.message}`, true);
-      return false;
-    }
+    } catch (e) { debugLog(`Save error: ${e.message}`, true); return false; }
   }
 
   async function deleteCustomerFromFirestore(id) {
@@ -1151,40 +1315,23 @@
     reader.onload = function(e) {
       const csvText = e.target.result;
       let parsedData = [];
-      
       try {
         const results = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          trimHeaders: true,
+          header: true, skipEmptyLines: true, trimHeaders: true,
           transformHeader: (h) => h.trim().toLowerCase()
         });
-        if (results.data && results.data.length > 0) {
-          parsedData = results.data;
-          debugLog(`Parsed ${parsedData.length} rows`);
-        }
+        if (results.data && results.data.length > 0) parsedData = results.data;
       } catch (err) {
         debugLog(`Parse error: ${err.message}`, true);
         showToast('❌ CSV Parse Error: ' + err.message, 3000);
         return;
       }
-      
-      if (parsedData.length === 0) {
-        showToast('❌ No data parsed from CSV', 3000);
-        return;
-      }
-      
+      if (parsedData.length === 0) { showToast('❌ No data parsed from CSV', 3000); return; }
       importStatus.style.display = 'block';
       importProgress.textContent = 'Starting import...';
       importProgressBar.style.width = '0%';
-      importStats.textContent = '';
-      
-      let processed = 0;
-      let added = 0;
-      let failed = 0;
-      let geocodeFailed = 0;
+      let processed = 0, added = 0, failed = 0, geocodeFailed = 0;
       const total = parsedData.length;
-      
       parsedData.forEach((row, index) => {
         const business = row.business || row.name || row.store || 'Unknown';
         const contact = row.contact || row['contact person'] || '';
@@ -1192,68 +1339,34 @@
         const address = row.address || row.location || '';
         let status = row.status || row['status'] || 'active';
         status = (status === 'inactive') ? 'inactive' : 'active';
-        
         let lat = parseFloat(row.lat) || parseFloat(row.latitude) || null;
         let lng = parseFloat(row.lng) || parseFloat(row.longitude) || null;
-        
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          const cust = { 
-            business: business.trim() || 'Unknown', 
-            contact: contact.trim() || '', 
-            phone: phone.trim() || '', 
-            address: address.trim() || '', 
-            lat: lat, 
-            lng: lng,
-            status: status
-          };
+          const cust = { business: business.trim() || 'Unknown', contact: contact.trim() || '', phone: phone.trim() || '', address: address.trim() || '', lat, lng, status };
           saveCustomerToFirestore(cust).then(saved => {
             if (saved) added++; else failed++;
-            processed++;
-            updateProgress();
+            processed++; updateProgress();
           });
         } else if (address && address.trim() !== '') {
           importProgress.textContent = `Geocoding ${index+1}/${total}: ${business.substring(0, 30)}...`;
-          
           geocodeWithRetry(address).then(async (coords) => {
-            const cust = { 
-              business: business.trim() || 'Unknown', 
-              contact: contact.trim() || '', 
-              phone: phone.trim() || '', 
-              address: address.trim(), 
-              lat: coords ? coords.lat : null, 
-              lng: coords ? coords.lng : null,
-              status: status
-            };
-            
-            if (!coords) {
-              geocodeFailed++;
-              debugLog(`⚠️ Geocode failed: ${address.substring(0, 50)}...`, true);
-            }
-            
+            const cust = { business: business.trim() || 'Unknown', contact: contact.trim() || '', phone: phone.trim() || '', address: address.trim(), lat: coords ? coords.lat : null, lng: coords ? coords.lng : null, status };
+            if (!coords) { geocodeFailed++; debugLog(`⚠️ Geocode failed: ${address.substring(0, 50)}...`, true); }
             const saved = await saveCustomerToFirestore(cust);
             if (saved) added++; else failed++;
-            processed++;
-            updateProgress();
+            processed++; updateProgress();
           });
-        } else {
-          failed++;
-          processed++;
-          updateProgress();
-        }
-        
+        } else { failed++; processed++; updateProgress(); }
         function updateProgress() {
           const progress = Math.min((processed / total * 100), 100);
           importProgressBar.style.width = progress + '%';
           importProgress.textContent = `Processing ${processed}/${total} rows...`;
           importStats.textContent = `✅ ${added} added, ❌ ${failed} failed${geocodeFailed > 0 ? `, 🌍 ${geocodeFailed} geocode failed` : ''}`;
-          
           if (processed >= total) {
             setTimeout(() => {
               importStatus.style.display = 'none';
-              const msg = `✅ Import complete: ${added} added, ${failed} failed${geocodeFailed > 0 ? ` (${geocodeFailed} geocode failed)` : ''}`;
-              loadStatus.textContent = msg;
+              loadStatus.textContent = `✅ Import complete: ${added} added, ${failed} failed${geocodeFailed > 0 ? ` (${geocodeFailed} geocode failed)` : ''}`;
               showToast(`✅ Imported ${added} customers!`, 3000);
-              debugLog(`Import complete: ${added} added, ${failed} failed`);
               applyFilters();
               if (map) { map.invalidateSize(); setTimeout(fitMarkersBtn.click, 500); }
             }, 500);
@@ -1266,15 +1379,10 @@
 
   // ----- SAMPLE DATA -----
   async function loadSampleData() {
-    if (!currentUser) {
-      showToast('Please sign in first', 3000);
-      return;
-    }
-
+    if (!currentUser) { showToast('Please sign in first', 3000); return; }
     loadSampleBtn.disabled = true;
     loadSampleBtn.innerHTML = '<span class="loading-spinner">⟳</span> Loading...';
     loadStatus.textContent = 'Loading sample customers...';
-    
     const sampleCustomers = [
       { business: 'KLCC Mall', contact: 'John Tan', phone: '012-345-6789', address: 'Kuala Lumpur City Centre', lat: 3.1579, lng: 101.7117, status: 'active' },
       { business: 'Sunway Pyramid', contact: 'Sarah Lee', phone: '012-345-6780', address: 'Bandar Sunway, Petaling Jaya', lat: 3.0736, lng: 101.6075, status: 'active' },
@@ -1283,21 +1391,15 @@
       { business: '1 Utama', contact: 'Michael Lim', phone: '012-345-6783', address: 'Bandar Utama, Petaling Jaya', lat: 3.1406, lng: 101.6121, status: 'inactive' },
       { business: 'Pavilion KL', contact: 'Christina Ong', phone: '012-345-6784', address: 'Bukit Bintang, Kuala Lumpur', lat: 3.1488, lng: 101.7130, status: 'active' }
     ];
-
-    let successCount = 0;
-    let failCount = 0;
-
+    let successCount = 0, failCount = 0;
     for (const cust of sampleCustomers) {
       const saved = await saveCustomerToFirestore(cust);
       if (saved) successCount++; else failCount++;
       loadStatus.textContent = `Added ${successCount}/${sampleCustomers.length} customers...`;
     }
-    
     await loadCustomersFromFirestore();
-    
     loadSampleBtn.disabled = false;
     loadSampleBtn.innerHTML = '<i class="fas fa-database"></i> Load sample';
-    
     if (successCount > 0) {
       loadStatus.textContent = `✅ Added ${successCount} sample customers`;
       showToast(`✅ Added ${successCount} sample customers!`, 3000);
@@ -1305,7 +1407,6 @@
       loadStatus.textContent = '❌ Failed to add sample customers';
       showToast('❌ Failed to add sample customers', 3000);
     }
-    
     applyFilters();
     if (map) { map.invalidateSize(); setTimeout(fitMarkersBtn.click, 500); }
   }
@@ -1350,28 +1451,36 @@
     return R * c;
   }
 
-  // ----- RENDER -----
+  // ----- RENDER WITH PAGINATION -----
   function renderCustomers() {
     if (!currentUser) return;
     
     const total = customers.length;
     const activeCount = customers.filter(c => c.status === 'active').length;
     const inactiveCount = customers.filter(c => c.status === 'inactive').length;
-    
     countAll.textContent = total;
     countActive.textContent = activeCount;
     countInactive.textContent = inactiveCount;
     
     const filtered = getFilteredCustomers();
+    const totalFiltered = filtered.length;
     
-    if (filtered.length === 0) {
+    const perPage = itemsPerPage === Infinity ? totalFiltered : itemsPerPage;
+    totalPages = Math.ceil(totalFiltered / perPage);
+    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+    if (totalPages === 0) totalPages = 1;
+    
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = Math.min(startIndex + perPage, totalFiltered);
+    const pageItems = filtered.slice(startIndex, endIndex);
+    
+    paginationControls.style.display = totalFiltered > perPage ? 'flex' : 'none';
+    
+    if (pageItems.length === 0) {
       let msg = 'No customers. Import CSV or add manually.';
       if (customers.length > 0) {
-        if (currentRadius > 0) {
-          msg = `No customers within ${currentRadius}km radius.`;
-        } else {
-          msg = currentFilter === 'all' ? 'No customers found.' : `No ${currentFilter} customers found.`;
-        }
+        if (currentRadius > 0) msg = `No customers within ${currentRadius}km radius.`;
+        else msg = currentFilter === 'all' ? 'No customers found.' : `No ${currentFilter} customers found.`;
       }
       customerList.innerHTML = `<div class="text-sm" style="color:#64748b;">${msg}</div>`;
       customerCount.textContent = customers.length;
@@ -1379,7 +1488,7 @@
     }
     
     let html = '';
-    const sorted = [...filtered];
+    const sorted = [...pageItems];
     if (currentPosition) {
       sorted.sort((a,b) => {
         const dA = haversine(currentPosition.lat, currentPosition.lng, a.lat || 0, a.lng || 0);
@@ -1388,23 +1497,19 @@
       });
     }
     
-    const displayCustomers = sorted.slice(0, 50);
     let filterLabel = currentFilter === 'all' ? 'all customers' : `${currentFilter} customers`;
-    if (currentRadius > 0) {
-      filterLabel += ` within ${currentRadius}km`;
-    }
-    html = `<div class="text-sm" style="color:#64748b; margin-bottom:8px;">Showing ${displayCustomers.length} of ${sorted.length} ${filterLabel} - Click any customer to show on map</div>`;
+    if (currentRadius > 0) filterLabel += ` within ${currentRadius}km`;
+    html = `<div class="text-sm" style="color:#64748b; margin-bottom:8px;">
+      Showing ${startIndex + 1} - ${endIndex} of ${totalFiltered} ${filterLabel}
+    </div>`;
     
-    displayCustomers.forEach(c => {
-      let dist = 'N/A';
-      let distKm = 0;
+    sorted.forEach(c => {
+      let dist = 'N/A', distKm = 0;
       let hasValidCoords = c.lat && c.lng && !isNaN(c.lat) && !isNaN(c.lng) && c.lat !== 0 && c.lng !== 0;
-      
       if (currentPosition && hasValidCoords) {
         distKm = haversine(currentPosition.lat, currentPosition.lng, c.lat, c.lng);
         dist = distKm < 1 ? (distKm*1000).toFixed(0)+' m' : distKm.toFixed(1)+' km';
       }
-      
       const isNear = (hasValidCoords && distKm < 2) ? '⭐' : '';
       const coordsText = hasValidCoords ? `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}` : '⚠️ No coordinates';
       const isSelected = selectedCustomerId === c.id ? 'selected-customer' : '';
@@ -1413,7 +1518,7 @@
       const statusLabel = status === 'active' ? '🟢 Active' : '🔴 Inactive';
       
       html += `
-        <div class="customer-item ${isSelected}" data-customer-id="${c.id}" onclick="handleCustomerClick('${c.id}')">
+        <div class="customer-item ${isSelected}" data-customer-id="${c.id}">
           <div class="customer-row">
             <div class="customer-info">
               <strong>${c.business || 'Unnamed'} ${isNear}</strong>
@@ -1426,15 +1531,10 @@
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span class="distance-badge"><i class="fas fa-route"></i> ${dist}</span>
               <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                <button class="view-on-map-btn" onclick="event.stopPropagation(); handleCustomerClick('${c.id}')">
-                  <i class="fas fa-map-marker-alt"></i> View
-                </button>
-                <button class="waze-btn" onclick="event.stopPropagation(); navigateWithWaze(${c.lat || 0}, ${c.lng || 0}, '${c.business}')">
-                  <i class="fas fa-car"></i> Waze
-                </button>
-                <button class="google-maps-btn" onclick="event.stopPropagation(); navigateWithGoogleMaps(${c.lat || 0}, ${c.lng || 0}, '${c.business}')">
-                  <i class="fas fa-map"></i> Maps
-                </button>
+                <button class="view-on-map-btn" onclick="event.stopPropagation(); handleCustomerClick('${c.id}')"><i class="fas fa-map-marker-alt"></i> View</button>
+                <button class="edit-btn" onclick="event.stopPropagation(); openEditModal('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
+                <button class="waze-btn" onclick="event.stopPropagation(); navigateWithWaze(${c.lat || 0}, ${c.lng || 0}, '${c.business}')"><i class="fas fa-car"></i> Waze</button>
+                <button class="google-maps-btn" onclick="event.stopPropagation(); navigateWithGoogleMaps(${c.lat || 0}, ${c.lng || 0}, '${c.business}')"><i class="fas fa-map"></i> Maps</button>
                 <button class="btn-outline" style="padding:4px 10px; font-size:0.7rem; border-color:#d1d5db;" onclick="event.stopPropagation(); toggleCustomerStatus('${c.id}', '${status}')">
                   <i class="fas fa-toggle-${status === 'active' ? 'on' : 'off'}"></i> ${status === 'active' ? 'Set Inactive' : 'Set Active'}
                 </button>
@@ -1449,6 +1549,37 @@
     });
     customerList.innerHTML = html;
     customerCount.textContent = customers.length;
+    updatePagination(totalFiltered);
+  }
+
+  function updatePagination(totalItems) {
+    const perPage = itemsPerPage === Infinity ? totalItems : itemsPerPage;
+    totalPages = Math.ceil(totalItems / perPage);
+    if (totalPages === 0) totalPages = 1;
+    
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
+    
+    let pageHtml = '';
+    const maxVisible = 7;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    if (startPage > 1) {
+      pageHtml += `<button onclick="goToPage(1)">1</button>`;
+      if (startPage > 2) pageHtml += `<span>…</span>`;
+    }
+    for (let i = startPage; i <= endPage; i++) {
+      pageHtml += `<button class="${i === currentPage ? 'active-page' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pageHtml += `<span>…</span>`;
+      pageHtml += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+    pageNumbers.innerHTML = pageHtml;
   }
 
   // Toggle customer status
@@ -1468,29 +1599,25 @@
     }
   };
 
-  // Make navigation functions global for popup buttons
+  window.goToPage = goToPage;
   window.navigateWithWaze = navigateWithWaze;
   window.navigateWithGoogleMaps = navigateWithGoogleMaps;
+  window.openEditModal = openEditModal;
+  window.closeEditModal = closeEditModal;
 
   // ----- MAP MARKERS WITH FILTER -----
   function updateMapMarkers() {
     if (!map) return;
-    
     customerMarkers.forEach(m => { try { map.removeLayer(m); } catch(e) {} });
     customerMarkers = [];
-    
     const filtered = getFilteredCustomers();
-    
     let addedCount = 0;
-    
     filtered.forEach(c => {
       if (c.lat && c.lng && !isNaN(c.lat) && !isNaN(c.lng) && c.lat !== 0 && c.lng !== 0) {
         try {
           const status = c.status || 'active';
           const statusEmoji = status === 'active' ? '🟢' : '🔴';
           const statusText = status === 'active' ? 'Active' : 'Inactive';
-          
-          // Different colors for active (green) and inactive (red)
           const markerColor = status === 'active' ? '#22c55e' : '#ef4444';
           const markerIcon = L.divIcon({
             className: 'custom-marker',
@@ -1498,56 +1625,35 @@
             iconSize: [16, 16],
             iconAnchor: [8, 8]
           });
-          
           const popupText = `
             <b>${c.business || 'Unknown'}</b><br>
             ${c.address || ''}<br>
             ${statusEmoji} ${statusText}
             <br><br>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-              <button onclick="navigateWithWaze(${c.lat}, ${c.lng}, '${c.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
-                <i class="fas fa-car"></i> Waze
-              </button>
-              <button onclick="navigateWithGoogleMaps(${c.lat}, ${c.lng}, '${c.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
-                <i class="fas fa-map"></i> Google Maps
-              </button>
+              <button onclick="navigateWithWaze(${c.lat}, ${c.lng}, '${c.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;"><i class="fas fa-car"></i> Waze</button>
+              <button onclick="navigateWithGoogleMaps(${c.lat}, ${c.lng}, '${c.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;"><i class="fas fa-map"></i> Google Maps</button>
             </div>
           `;
-          
-          const marker = L.marker([c.lat, c.lng], { icon: markerIcon })
-            .addTo(map)
-            .bindPopup(popupText);
-          
-          marker.on('click', function() {
-            showCustomerOnMap(c.id);
-          });
-          
+          const marker = L.marker([c.lat, c.lng], { icon: markerIcon }).addTo(map).bindPopup(popupText);
+          marker.on('click', function() { showCustomerOnMap(c.id); });
           customerMarkers.push(marker);
           addedCount++;
-        } catch(e) {
-          debugLog(`Error adding marker for ${c.business}: ${e.message}`, true);
-        }
+        } catch(e) {}
       }
     });
-    
     const filterLabel = currentFilter === 'all' ? 'All' : currentFilter;
     const radiusLabel = currentRadius > 0 ? ` (${currentRadius}km)` : '';
     mapMarkerCount.textContent = `${addedCount} markers shown${radiusLabel}`;
-    
-    debugLog(`Added ${addedCount} markers to map (filter: ${currentFilter}, radius: ${currentRadius})`);
   }
 
   // ----- CREATE ADMIN -----
   async function createAdminUser() {
-    const adminEmail = 'admin@tracker.com';
-    const adminPassword = 'Admin123';
-    const adminDisplayName = 'Admin';
-    
+    const adminEmail = 'admin@tracker.com', adminPassword = 'Admin123', adminDisplayName = 'Admin';
     authError.classList.remove('show');
     authSuccess.style.display = 'none';
     createAdminBtn.disabled = true;
     createAdminBtn.innerHTML = '<span class="loading-spinner">⟳</span> Creating...';
-    
     try {
       const adminDoc = await db.collection('users').doc('admin').get();
       if (adminDoc.exists) {
@@ -1557,19 +1663,14 @@
         createAdminBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Admin Account';
         return;
       }
-      
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(adminEmail, adminPassword);
         const user = userCredential.user;
         await user.updateProfile({ displayName: adminDisplayName });
         await db.collection('users').doc('admin').set({
-          uid: user.uid,
-          email: adminEmail,
-          displayName: adminDisplayName,
-          role: 'admin',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          uid: user.uid, email: adminEmail, displayName: adminDisplayName,
+          role: 'admin', createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
         authSuccess.textContent = '✅ Admin account created! Please sign in.';
         authSuccess.style.display = 'block';
         await auth.signOut();
@@ -1586,20 +1687,17 @@
       authError.textContent = 'Error: ' + error.message;
       authError.classList.add('show');
     }
-    
     createAdminBtn.disabled = false;
     createAdminBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Admin Account';
   }
 
   // ----- AUTH -----
   loginBtn.addEventListener('click', async () => {
-    const email = emailInput.value.trim();
-    const pass = passwordInput.value;
+    const email = emailInput.value.trim(), pass = passwordInput.value;
     authError.classList.remove('show');
     authSuccess.style.display = 'none';
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<span class="loading-spinner">⟳</span> Signing in...';
-    
     try {
       await auth.signInWithEmailAndPassword(email, pass);
     } catch (err) {
@@ -1611,7 +1709,6 @@
         authError.classList.add('show');
       }
     }
-    
     loginBtn.disabled = false;
     loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign in';
   });
@@ -1624,12 +1721,10 @@
       authCard.style.display = 'none';
       appContainer.style.display = 'block';
       setupInfo.classList.remove('show');
-      
       try {
         const adminDoc = await db.collection('users').doc('admin').get();
         if (adminDoc.exists && adminDoc.data().uid === user.uid) isAdmin = true;
       } catch (e) {}
-      
       userGreeting.textContent = `👋 ${user.displayName || user.email}${isAdmin ? ' ⭐ Admin' : ''}`;
       initApp();
     } else {
