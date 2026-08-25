@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Customer Tracker · Firebase + GPS</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Papaparse for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Font Awesome icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; margin: 0; padding: 0; }
+    body { background: #f5f7fb; min-height: 100vh; display: flex; justify-content: center; }
+    #app { max-width: 1100px; width: 100%; padding: 16px; }
+    .auth-card, .app-container { background: white; border-radius: 28px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); padding: 24px; margin-top: 20px; }
+    .auth-card { max-width: 420px; margin: 40px auto; }
+    .auth-card h2 { margin-bottom: 20px; color: #1e293b; font-weight: 600; }
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 0.85rem; font-weight: 500; color: #334155; margin-bottom: 4px; }
+    .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 1rem; transition: 0.2s; font-family: inherit; background: white; }
+    .input-group textarea { border-radius: 16px; resize: vertical; min-height: 60px; }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .btn { background: #2563eb; color: white; border: none; padding: 12px 20px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #1e293b; padding: 8px 16px; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-success { background: #22c55e; color: white; border: none; }
+    .btn-success:hover { background: #16a34a; }
+    .btn-sm { padding: 6px 14px; font-size: 0.85rem; width: auto; }
+    .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .mt-2 { margin-top: 12px; }
+    .mb-2 { margin-bottom: 12px; }
+    .text-sm { font-size: 0.9rem; color: #475569; }
+    .badge { background: #e2e8f0; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 600; }
+    #map { height: 350px; width: 100%; border-radius: 20px; border: 1px solid #e2e8f0; margin: 16px 0; background: #f0f0f0; }
+    .customer-item { background: #f8fafc; border-radius: 18px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid #3b82f6; cursor: pointer; transition: 0.2s; }
+    .customer-item:hover { background: #eef2ff; border-left-color: #2563eb; transform: translateX(4px); }
+    .customer-item .customer-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; width: 100%; }
+    .customer-info strong { display: block; color: #0f172a; }
+    .customer-info span { font-size: 0.85rem; color: #475569; display: inline-block; margin-right: 12px; }
+    .customer-info .coords { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 2px; font-family: monospace; }
+    .customer-info .address { font-size: 0.85rem; color: #475569; display: block; margin-top: 2px; }
+    .distance-badge { background: #dbeafe; color: #1d4ed8; padding: 4px 12px; border-radius: 30px; font-weight: 500; font-size: 0.8rem; }
+    .action-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .action-btns button { background: white; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .action-btns button:hover { background: #eef2ff; border-color: #3b82f6; }
+    .csv-upload { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .csv-upload label { background: #eef2ff; padding: 8px 16px; border-radius: 40px; border: 1px dashed #3b82f6; cursor: pointer; font-weight: 500; transition: 0.2s; }
+    .csv-upload label:hover { background: #dbeafe; }
+    #fileInput { display: none; }
+    .logout-btn { background: #f1f5f9; border: none; padding: 8px 16px; border-radius: 40px; font-weight: 500; cursor: pointer; }
+    .logout-btn:hover { background: #e2e8f0; }
+    .alert { padding: 12px 16px; border-radius: 40px; background: #fef2f2; color: #b91c1c; margin: 12px 0; display: none; }
+    .alert.show { display: block; }
+    .alert-success { background: #dcfce7; color: #166534; display: none; }
+    .alert-info { background: #dbeafe; color: #1e40af; display: none; }
+    .alert-info.show, .alert-success.show { display: block; }
+    .user-greeting { font-weight: 500; color: #0f172a; }
+    .setup-instructions { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 16px; padding: 16px; margin: 12px 0; }
+    .setup-instructions h4 { color: #0369a1; margin-bottom: 8px; }
+    .setup-instructions ol { padding-left: 20px; color: #0c4a6e; font-size: 0.9rem; }
+    .setup-instructions ol li { margin-bottom: 4px; }
+    .loading-spinner { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 40px; font-size: 0.9rem; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .toast.show { display: block; }
+    .csv-format-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin: 8px 0; font-family: monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre; }
+    .download-btn { background: #22c55e; color: white; border: none; padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; cursor: pointer; }
+    .download-btn:hover { background: #16a34a; }
+    .debug-box { background: #1e293b; color: #a5f3fc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; max-height: 300px; overflow-y: auto; margin: 8px 0; display: none; white-space: pre-wrap; word-wrap: break-word; }
+    .debug-box.show { display: block; }
+    .counter-badge { background: #2563eb; color: white; padding: 2px 10px; border-radius: 30px; font-size: 0.75rem; margin-left: 8px; }
+    .map-controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .map-controls button { background: white; border: 1px solid #d1d5db; padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+    .map-controls button:hover { background: #eef2ff; border-color: #3b82f6; }
+    .geo-progress { background: #e2e8f0; height: 4px; border-radius: 2px; margin: 8px 0; overflow: hidden; }
+    .geo-progress-bar { height: 100%; background: #2563eb; width: 0%; transition: width 0.3s; }
+    .fix-btn { background: #f59e0b !important; color: white !important; border-color: #d97706 !important; }
+    .fix-btn:hover { background: #d97706 !important; }
+    .add-customer-btn { background: #22c55e !important; color: white !important; border-color: #16a34a !important; }
+    .add-customer-btn:hover { background: #16a34a !important; }
+    .add-customer-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 16px; padding: 16px; margin: 8px 0; display: none; }
+    .add-customer-box.show { display: block; }
+    .add-customer-box .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .add-customer-box .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } }
+    .customer-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; width: 100%; }
+    .geocode-result { font-size: 0.8rem; padding: 6px 12px; border-radius: 30px; margin-top: 4px; display: inline-block; }
+    .geocode-success { background: #dcfce7; color: #166534; }
+    .geocode-failed { background: #fef2f2; color: #b91c1c; }
+    .geocode-pending { background: #fef3c7; color: #92400e; }
+    .coord-input-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .coord-input-group input { flex: 1; min-width: 80px; }
+    .coord-input-group .coord-label { font-size: 0.75rem; color: #64748b; }
+    .selected-customer { background: #dbeafe !important; border-left-color: #2563eb !important; border-left-width: 6px !important; }
+    .view-on-map-btn { background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .view-on-map-btn:hover { background: #2563eb; }
+    .status-tag { display: inline-block; padding: 2px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 600; margin-left: 8px; }
+    .status-active { background: #dcfce7; color: #166534; }
+    .status-inactive { background: #fef2f2; color: #b91c1c; }
+    .status-select { border-radius: 40px; padding: 8px 14px; border: 1px solid #e2e8f0; background: white; font-size: 0.9rem; cursor: pointer; width: 100%; }
+    .status-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .filter-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .filter-btn { padding: 4px 16px; border-radius: 30px; border: 1px solid #d1d5db; background: white; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+    .filter-btn:hover { background: #f1f5f9; }
+    .filter-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+    .filter-btn.active:hover { background: #1d4ed8; }
+    .filter-count { font-size: 0.7rem; opacity: 0.7; margin-left: 4px; }
+    .map-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin: 4px 0; font-size: 0.8rem; }
+    .map-legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .legend-dot-active { background: #22c55e; border: 2px solid #16a34a; }
+    .legend-dot-inactive { background: #94a3b8; border: 2px solid #64748b; }
+    .radius-filter { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin: 4px 0; }
+    .radius-filter label { font-size: 0.85rem; font-weight: 500; color: #475569; }
+    .radius-filter input[type="range"] { width: 150px; accent-color: #2563eb; }
+    .radius-filter .radius-value { font-weight: 600; color: #2563eb; min-width: 60px; }
+    .radius-filter .radius-unit { font-size: 0.8rem; color: #64748b; }
+    .radius-filter input[type="number"] { width: 80px; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 30px; font-size: 0.9rem; text-align: center; }
+    .radius-filter input[type="number"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .radius-clear-btn { background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; }
+    .radius-clear-btn:hover { background: #dc2626; }
+    .radius-apply-btn { background: #2563eb; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; }
+    .radius-apply-btn:hover { background: #1d4ed8; }
+    @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } .radius-filter input[type="range"] { width: 100px; } .radius-filter input[type="number"] { width: 70px; } }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- AUTH CARD -->
+  <div id="authCard" class="auth-card">
+    <h2><i class="fas fa-store-alt" style="color: #2563eb;"></i> Customer Tracker</h2>
+    <p class="text-sm mb-2">Sign in to manage customers & see nearby outlets</p>
+    
+    <div id="authError" class="alert"></div>
+    <div id="authSuccess" class="alert alert-success"></div>
+    <div id="setupInfo" class="alert alert-info">
+      <strong>⚠️ Firebase Setup Required</strong>
+      <div class="setup-instructions">
+        <h4><i class="fas fa-cog"></i> Enable Authentication:</h4>
+        <ol>
+          <li>Go to <a href="https://console.firebase.google.com/project/merchantlocation-a5a49/authentication" target="_blank">Firebase Console → Authentication</a></li>
+          <li>Click <strong>"Get Started"</strong> or <strong>"Set up sign-in method"</strong></li>
+          <li>Enable <strong>Email/Password</strong> as a sign-in provider</li>
+          <li>Click <strong>"Save"</strong> and refresh this page</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label><i class="far fa-envelope"></i> Email</label>
+      <input type="email" id="emailInput" placeholder="user@example.com" value="admin@tracker.com">
+    </div>
+    <div class="input-group">
+      <label><i class="fas fa-lock"></i> Password</label>
+      <input type="password" id="passwordInput" placeholder="••••••••" value="Admin123">
+    </div>
+    <button id="loginBtn" class="btn"><i class="fas fa-sign-in-alt"></i> Sign in</button>
+    <p class="text-sm mt-2" style="text-align:center;">Default Admin: admin@tracker.com / Admin123</p>
+    <button id="createAdminBtn" class="btn-outline" style="width:auto; margin-top:10px; padding:8px 20px;">
+      <i class="fas fa-user-plus"></i> Create Admin Account
+    </button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="appContainer" class="app-container" style="display:none;">
+    <div class="flex-between">
+      <h3><i class="fas fa-map-pin" style="color: #2563eb;"></i> Nearby customers <span id="customerCount" class="counter-badge">0</span></h3>
+      <div>
+        <span id="userGreeting" class="user-greeting"></span>
+        <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+
+    <div class="flex-row mt-2">
+      <span id="gpsStatus" class="badge"><i class="fas fa-satellite-dish"></i> Locating...</span>
+      <span id="coordsDisplay" class="text-sm"></span>
+      <button id="refreshLocationBtn" class="btn-outline" style="width:auto; padding: 4px 16px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+    
+    <!-- Map -->
+    <div id="map"></div>
+    
+    <!-- Map Legend -->
+    <div class="map-legend">
+      <span style="font-weight:500; color:#475569;"><i class="fas fa-info-circle"></i> Map Legend:</span>
+      <span class="map-legend-item"><span class="legend-dot legend-dot-active"></span> Active</span>
+      <span class="map-legend-item"><span class="legend-dot legend-dot-inactive"></span> Inactive</span>
+      <span style="margin-left:auto; font-size:0.75rem; color:#94a3b8;" id="mapMarkerCount">0 markers shown</span>
+    </div>
+    
+    <!-- Radius Filter -->
+    <div class="radius-filter">
+      <label><i class="fas fa-route"></i> Distance Filter:</label>
+      <input type="range" id="radiusSlider" min="0" max="100" value="0" step="1">
+      <input type="number" id="radiusInput" min="0" max="999" value="0" step="1" placeholder="km">
+      <span class="radius-unit">km</span>
+      <button id="applyRadiusBtn" class="radius-apply-btn"><i class="fas fa-check"></i> Apply</button>
+      <button id="clearRadiusBtn" class="radius-clear-btn"><i class="fas fa-times"></i> Clear</button>
+      <span id="radiusCount" class="text-sm" style="color:#64748b; margin-left:8px;"></span>
+    </div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <button id="zoomInBtn"><i class="fas fa-plus"></i> Zoom In</button>
+      <button id="zoomOutBtn"><i class="fas fa-minus"></i> Zoom Out</button>
+      <button id="resetViewBtn"><i class="fas fa-home"></i> Reset View</button>
+      <button id="fitMarkersBtn"><i class="fas fa-arrows-alt"></i> Fit All Markers</button>
+      <button id="fixLocationsBtn" class="fix-btn"><i class="fas fa-wrench"></i> Fix All Locations</button>
+      <button id="showAddCustomerBtn" class="add-customer-btn"><i class="fas fa-plus"></i> Add Customer</button>
+    </div>
+
+    <!-- Add Customer Form -->
+    <div id="addCustomerBox" class="add-customer-box">
+      <h4 style="color:#166534; margin-bottom:12px;">
+        <i class="fas fa-user-plus"></i> Add New Customer
+        <button id="closeAddCustomerBtn" class="btn-outline" style="width:auto; padding:4px 12px; float:right; font-size:0.8rem;">✕ Close</button>
+      </h4>
+      
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-store"></i> Business Name *</label>
+          <input type="text" id="newBusiness" placeholder="e.g., Sunny Bakery">
+        </div>
+        <div class="input-group">
+          <label><i class="far fa-user"></i> Contact Person</label>
+          <input type="text" id="newContact" placeholder="e.g., Lisa Wong">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-phone"></i> Phone Number</label>
+          <input type="text" id="newPhone" placeholder="e.g., 012-345-6789">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-toggle-on"></i> Status</label>
+          <select id="newStatus" class="status-select">
+            <option value="active">🟢 Active</option>
+            <option value="inactive">🔴 Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="input-group">
+          <label><i class="fas fa-globe"></i> Coordinates (Latitude, Longitude)</label>
+          <div class="coord-input-group">
+            <input type="text" id="newLat" placeholder="3.13755" style="flex:1; min-width:80px;">
+            <span class="coord-label">,</span>
+            <input type="text" id="newLng" placeholder="101.59592" style="flex:1; min-width:80px;">
+          </div>
+        </div>
+        <div class="input-group" style="display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;">
+          <button id="geocodeAddressBtn" class="btn-outline btn-sm"><i class="fas fa-map-pin"></i> Geocode</button>
+          <button id="useCurrentLocationBtn" class="btn-outline btn-sm" style="border-color:#3b82f6; color:#2563eb;"><i class="fas fa-location-arrow"></i> My Location</button>
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <label><i class="fas fa-map-marker-alt"></i> Address *</label>
+        <textarea id="newAddress" placeholder="Enter full address...&#10;e.g., G-8 VIM3, Bandar Sri Menjalara, 52200 Kuala Lumpur"></textarea>
+      </div>
+      
+      <div class="form-row-3">
+        <div class="input-group">
+          <label><i class="fas fa-search"></i> Geocode Status</label>
+          <div id="geocodeStatus" class="geocode-result geocode-pending">⏳ Enter address and click geocode</div>
+        </div>
+        <div class="input-group" style="display:flex; align-items:flex-end; gap:8px;">
+          <button id="clearFormBtn" class="btn-outline btn-sm" style="border-color:#ef4444; color:#ef4444;"><i class="fas fa-undo"></i> Clear</button>
+        </div>
+      </div>
+      
+      <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+        <button id="saveCustomerBtn" class="btn-success btn-sm"><i class="fas fa-save"></i> Save Customer</button>
+        <button id="saveAndContinueBtn" class="btn-outline btn-sm"><i class="fas fa-plus-circle"></i> Save & Add Another</button>
+      </div>
+      <div id="addCustomerStatus" class="text-sm" style="margin-top:8px; color:#64748b;"></div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">📋 All <span class="filter-count" id="countAll">0</span></button>
+      <button class="filter-btn" data-filter="active" onclick="setFilter('active')">🟢 Active <span class="filter-count" id="countActive">0</span></button>
+      <button class="filter-btn" data-filter="inactive" onclick="setFilter('inactive')">🔴 Inactive <span class="filter-count" id="countInactive">0</span></button>
+    </div>
+
+    <!-- Import Status -->
+    <div id="importStatus" class="import-status" style="display:none;">
+      <div id="importProgress" class="import-progress-text">Processing...</div>
+      <div class="geo-progress">
+        <div id="importProgressBar" class="geo-progress-bar" style="width:0%;"></div>
+      </div>
+      <div id="importStats" style="font-size:0.85rem; margin-top:4px;"></div>
+    </div>
+
+    <div class="csv-upload mt-2">
+      <label for="fileInput"><i class="fas fa-file-csv"></i> Import CSV (Auto-Geocode)</label>
+      <input type="file" id="fileInput" accept=".csv">
+      <span class="text-sm">(business, contact, phone, address, status)</span>
+      <button id="loadSampleBtn" class="btn-outline" style="width:auto; padding: 4px 16px;"><i class="fas fa-database"></i> Load sample</button>
+      <button id="downloadSampleBtn" class="download-btn"><i class="fas fa-download"></i> Sample CSV</button>
+      <span id="loadStatus" class="text-sm" style="color:#64748b;"></span>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin: 4px 0;">
+      <button id="toggleDebugBtn" class="btn-outline" style="width:auto; padding: 4px 12px; font-size:0.75rem;">Toggle Debug</button>
+      <button id="checkFirestoreBtn" class="btn-outline" style="width:auto; padding: 4px 12px; font-size:0.75rem;">Test Firestore</button>
+    </div>
+    <div id="debugBox" class="debug-box"></div>
+
+    <div id="customerList" class="mt-2">
+      <div class="text-sm" style="color:#64748b;">No customers loaded. Import CSV or add manually.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMqq99ETlc2tp5V17VmFRjfQzaq1EFXl8",
+    authDomain: "merchantlocation-a5a49.firebaseapp.com",
+    projectId: "merchantlocation-a5a49",
+    storageBucket: "merchantlocation-a5a49.firebasestorage.app",
+    messagingSenderId: "986276850316",
+    appId: "1:986276850316:web:b5f10d74a0e25de759e9a9"
+  };
+  
+  try {
+    firebase.initializeApp(firebaseConfig);
+  } catch (e) {
+    console.warn('Firebase init error:', e);
+  }
+  
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // DOM refs
+  const authCard = document.getElementById('authCard');
+  const appContainer = document.getElementById('appContainer');
+  const authError = document.getElementById('authError');
+  const authSuccess = document.getElementById('authSuccess');
+  const setupInfo = document.getElementById('setupInfo');
+  const emailInput = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const createAdminBtn = document.getElementById('createAdminBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userGreeting = document.getElementById('userGreeting');
+  const customerList = document.getElementById('customerList');
+  const customerCount = document.getElementById('customerCount');
+  const countAll = document.getElementById('countAll');
+  const countActive = document.getElementById('countActive');
+  const countInactive = document.getElementById('countInactive');
+  const mapMarkerCount = document.getElementById('mapMarkerCount');
+  const fileInput = document.getElementById('fileInput');
+  const loadSampleBtn = document.getElementById('loadSampleBtn');
+  const downloadSampleBtn = document.getElementById('downloadSampleBtn');
+  const loadStatus = document.getElementById('loadStatus');
+  const gpsStatus = document.getElementById('gpsStatus');
+  const coordsDisplay = document.getElementById('coordsDisplay');
+  const refreshLocationBtn = document.getElementById('refreshLocationBtn');
+  const toast = document.getElementById('toast');
+  const debugBox = document.getElementById('debugBox');
+  const toggleDebugBtn = document.getElementById('toggleDebugBtn');
+  const checkFirestoreBtn = document.getElementById('checkFirestoreBtn');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+  const resetViewBtn = document.getElementById('resetViewBtn');
+  const fitMarkersBtn = document.getElementById('fitMarkersBtn');
+  const fixLocationsBtn = document.getElementById('fixLocationsBtn');
+  const showAddCustomerBtn = document.getElementById('showAddCustomerBtn');
+  const closeAddCustomerBtn = document.getElementById('closeAddCustomerBtn');
+  const addCustomerBox = document.getElementById('addCustomerBox');
+  const newBusiness = document.getElementById('newBusiness');
+  const newContact = document.getElementById('newContact');
+  const newPhone = document.getElementById('newPhone');
+  const newAddress = document.getElementById('newAddress');
+  const newLat = document.getElementById('newLat');
+  const newLng = document.getElementById('newLng');
+  const newStatus = document.getElementById('newStatus');
+  const geocodeStatus = document.getElementById('geocodeStatus');
+  const geocodeAddressBtn = document.getElementById('geocodeAddressBtn');
+  const useCurrentLocationBtn = document.getElementById('useCurrentLocationBtn');
+  const clearFormBtn = document.getElementById('clearFormBtn');
+  const saveCustomerBtn = document.getElementById('saveCustomerBtn');
+  const saveAndContinueBtn = document.getElementById('saveAndContinueBtn');
+  const addCustomerStatus = document.getElementById('addCustomerStatus');
+  const radiusSlider = document.getElementById('radiusSlider');
+  const radiusInput = document.getElementById('radiusInput');
+  const radiusCount = document.getElementById('radiusCount');
+  const clearRadiusBtn = document.getElementById('clearRadiusBtn');
+  const applyRadiusBtn = document.getElementById('applyRadiusBtn');
+
+  // Filter state
+  let currentFilter = 'all';
+  let currentRadius = 0; // 0 means no radius filter
+
+  // Debug logging
+  let debugLogs = [];
+  function debugLog(msg, isError = false) {
+    const timestamp = new Date().toLocaleTimeString();
+    const prefix = isError ? '❌' : '✅';
+    debugLogs.push(`[${timestamp}] ${prefix} ${msg}`);
+    if (debugBox.classList.contains('show')) {
+      debugBox.textContent = debugLogs.join('\n');
+      debugBox.scrollTop = debugBox.scrollHeight;
+    }
+    if (isError) console.error(msg); else console.log(msg);
+  }
+
+  toggleDebugBtn.addEventListener('click', () => {
+    debugBox.classList.toggle('show');
+    if (debugBox.classList.contains('show')) {
+      debugBox.textContent = debugLogs.join('\n');
+      debugBox.scrollTop = debugBox.scrollHeight;
+    }
+  });
+
+  // Filter function
+  window.setFilter = function(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    applyFilters();
+  };
+
+  // Apply radius filter
+  function applyRadius() {
+    let value = parseFloat(radiusInput.value);
+    if (isNaN(value) || value < 0) value = 0;
+    if (value > 999) value = 999;
+    
+    currentRadius = value;
+    radiusSlider.value = Math.min(value, 100);
+    radiusInput.value = value;
+    
+    if (currentRadius === 0) {
+      radiusCount.textContent = '';
+    }
+    applyFilters();
+  }
+
+  // Sync slider and input
+  radiusSlider.addEventListener('input', function() {
+    const value = parseFloat(this.value);
+    radiusInput.value = value;
+    // Don't auto-apply - wait for Apply button
+  });
+
+  radiusInput.addEventListener('change', function() {
+    let value = parseFloat(this.value);
+    if (isNaN(value) || value < 0) value = 0;
+    if (value > 999) value = 999;
+    this.value = value;
+    radiusSlider.value = Math.min(value, 100);
+    // Don't auto-apply - wait for Apply button
+  });
+
+  radiusInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      applyRadius();
+    }
+  });
+
+  applyRadiusBtn.addEventListener('click', applyRadius);
+
+  clearRadiusBtn.addEventListener('click', function() {
+    radiusSlider.value = 0;
+    radiusInput.value = 0;
+    currentRadius = 0;
+    radiusCount.textContent = '';
+    applyFilters();
+    showToast('✅ Radius filter cleared', 2000);
+  });
+
+  // Get filtered customers based on status and radius
+  function getFilteredCustomers() {
+    let filtered = customers;
+    
+    // Apply status filter
+    if (currentFilter === 'active') {
+      filtered = filtered.filter(c => c.status === 'active');
+    } else if (currentFilter === 'inactive') {
+      filtered = filtered.filter(c => c.status === 'inactive');
+    }
+    
+    // Apply radius filter - only if radius > 0 AND we have a position
+    if (currentRadius > 0 && currentPosition) {
+      filtered = filtered.filter(c => {
+        if (!c.lat || !c.lng || isNaN(c.lat) || isNaN(c.lng)) return false;
+        const dist = haversine(currentPosition.lat, currentPosition.lng, c.lat, c.lng);
+        return dist <= currentRadius;
+      });
+    }
+    
+    return filtered;
+  }
+
+  // Apply all filters (status + radius)
+  function applyFilters() {
+    const filtered = getFilteredCustomers();
+    
+    // Update radius count
+    if (currentRadius > 0 && currentPosition) {
+      radiusCount.textContent = `${filtered.length} customers within ${currentRadius}km`;
+    } else if (currentRadius > 0 && !currentPosition) {
+      radiusCount.textContent = '⚠️ GPS location not available';
+    } else {
+      radiusCount.textContent = '';
+    }
+    
+    renderCustomers();
+    updateMapMarkers();
+  }
+
+  // ----- MAP SETUP -----
+  let map = null;
+  let userMarker = null;
+  let customerMarkers = [];
+  let lastGeocodeCoords = null;
+  let selectedCustomerId = null;
+  let highlightMarker = null;
+  let radiusCircle = null;
+  
+  function initMap() {
+    debugLog('Initializing map...');
+    try {
+      if (map) { map.remove(); map = null; }
+      const centerLat = currentPosition ? currentPosition.lat : 3.13755;
+      const centerLng = currentPosition ? currentPosition.lng : 101.59592;
+      map = L.map('map', { center: [centerLat, centerLng], zoom: 13, zoomControl: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+      L.control.zoom({ position: 'topright' }).addTo(map);
+      
+      map.on('click', function(e) {
+        if (addCustomerBox.classList.contains('show')) {
+          newLat.value = e.latlng.lat.toFixed(6);
+          newLng.value = e.latlng.lng.toFixed(6);
+          lastGeocodeCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+          geocodeStatus.textContent = '📍 Location selected on map';
+          geocodeStatus.className = 'geocode-result geocode-success';
+          showToast('📍 Location set from map!', 2000);
+        }
+      });
+      
+      setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+      debugLog('Map initialized');
+      if (currentPosition) updateUserMarker();
+      updateMapMarkers();
+      return map;
+    } catch (e) {
+      debugLog(`Map init error: ${e.message}`, true);
+    }
+  }
+
+  function updateUserMarker() {
+    if (!map || !currentPosition) return;
+    if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+    try {
+      const userIcon = L.divIcon({
+        className: 'user-marker',
+        html: '<i class="fas fa-user-circle" style="font-size:32px; color:#2563eb; text-shadow: 0 2px 4px rgba(0,0,0,0.3);"></i>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+      });
+      userMarker = L.marker([currentPosition.lat, currentPosition.lng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup('<b>📍 You are here</b>');
+      
+      updateRadiusCircle();
+    } catch(e) { debugLog(`User marker error: ${e.message}`, true); }
+  }
+
+  function updateRadiusCircle() {
+    if (radiusCircle) {
+      map.removeLayer(radiusCircle);
+      radiusCircle = null;
+    }
+    
+    if (currentRadius > 0 && currentPosition) {
+      radiusCircle = L.circle([currentPosition.lat, currentPosition.lng], {
+        radius: currentRadius * 1000,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1,
+        weight: 2,
+        dashArray: '5, 5'
+      }).addTo(map).bindPopup(`<b>Radius: ${currentRadius} km</b>`);
+    }
+  }
+
+  // Map controls
+  zoomInBtn.addEventListener('click', () => { if (map) map.zoomIn(); });
+  zoomOutBtn.addEventListener('click', () => { if (map) map.zoomOut(); });
+  resetViewBtn.addEventListener('click', () => {
+    if (map && currentPosition) map.setView([currentPosition.lat, currentPosition.lng], 13);
+    else if (map) map.setView([3.13755, 101.59592], 13);
+  });
+  fitMarkersBtn.addEventListener('click', () => {
+    if (!map) return;
+    const markers = customerMarkers.filter(m => m.getLatLng);
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      if (currentPosition && userMarker) group.addLayer(userMarker);
+      map.fitBounds(group.getBounds().pad(0.1));
+    } else if (currentPosition) {
+      map.setView([currentPosition.lat, currentPosition.lng], 14);
+    }
+  });
+
+  // ----- SHOW CUSTOMER ON MAP -----
+  function showCustomerOnMap(customerId) {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) {
+      showToast('Customer not found', 2000);
+      return;
+    }
+    
+    if (!customer.lat || !customer.lng || isNaN(customer.lat) || isNaN(customer.lng)) {
+      showToast('❌ This customer has no valid coordinates', 3000);
+      return;
+    }
+    
+    if (highlightMarker) {
+      map.removeLayer(highlightMarker);
+      highlightMarker = null;
+    }
+    
+    document.querySelectorAll('.customer-item').forEach(el => {
+      el.classList.remove('selected-customer');
+    });
+    
+    const customerElements = document.querySelectorAll('.customer-item');
+    customerElements.forEach(el => {
+      if (el.dataset.customerId === customerId) {
+        el.classList.add('selected-customer');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    
+    selectedCustomerId = customerId;
+    map.setView([customer.lat, customer.lng], 16);
+    
+    const statusEmoji = customer.status === 'active' ? '🟢' : '🔴';
+    const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
+    
+    const highlightIcon = L.divIcon({
+      className: 'highlight-marker',
+      html: `<div style="background:#2563eb; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 0 0 rgba(37,99,235,0.7); animation: pulse 1.5s infinite; position:relative;">
+              <div style="position:absolute; top:-10px; left:-10px; width:40px; height:40px; border-radius:50%; background:rgba(37,99,235,0.2); animation: ping 1.5s infinite;"></div>
+            </div>
+            <style>
+              @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.7); }
+                70% { box-shadow: 0 0 0 15px rgba(37,99,235,0); }
+                100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+              }
+              @keyframes ping {
+                0% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(2); opacity: 0; }
+              }
+            </style>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+    
+    highlightMarker = L.marker([customer.lat, customer.lng], { icon: highlightIcon })
+      .addTo(map)
+      .bindPopup(`
+        <b>📍 ${customer.business || 'Unnamed'}</b><br>
+        ${customer.address || 'No address'}<br>
+        <span style="font-size:0.8rem; color:#64748b;">${customer.lat.toFixed(5)}, ${customer.lng.toFixed(5)}</span><br>
+        <span style="font-size:0.8rem;">${statusEmoji} ${statusText}</span>
+      `)
+      .openPopup();
+    
+    showToast(`📍 Showing: ${customer.business} (${statusText})`, 3000);
+    debugLog(`Showing customer on map: ${customer.business}`);
+  }
+
+  // ----- ADD CUSTOMER FUNCTIONS -----
+  showAddCustomerBtn.addEventListener('click', () => {
+    addCustomerBox.classList.toggle('show');
+    if (addCustomerBox.classList.contains('show')) {
+      newBusiness.focus();
+      if (currentPosition) {
+        newLat.value = currentPosition.lat.toFixed(6);
+        newLng.value = currentPosition.lng.toFixed(6);
+        lastGeocodeCoords = { lat: currentPosition.lat, lng: currentPosition.lng };
+        geocodeStatus.textContent = '📍 Using your current location';
+        geocodeStatus.className = 'geocode-result geocode-success';
+      }
+    }
+  });
+  
+  closeAddCustomerBtn.addEventListener('click', () => {
+    addCustomerBox.classList.remove('show');
+    clearForm();
+  });
+
+  function clearForm() {
+    newBusiness.value = '';
+    newContact.value = '';
+    newPhone.value = '';
+    newAddress.value = '';
+    newLat.value = '';
+    newLng.value = '';
+    newStatus.value = 'active';
+    geocodeStatus.textContent = '⏳ Enter address and click geocode';
+    geocodeStatus.className = 'geocode-result geocode-pending';
+    lastGeocodeCoords = null;
+    addCustomerStatus.textContent = '';
+    document.getElementById('addCustomerStatus').style.color = '#64748b';
+  }
+
+  clearFormBtn.addEventListener('click', clearForm);
+
+  useCurrentLocationBtn.addEventListener('click', () => {
+    if (currentPosition) {
+      newLat.value = currentPosition.lat.toFixed(6);
+      newLng.value = currentPosition.lng.toFixed(6);
+      lastGeocodeCoords = { lat: currentPosition.lat, lng: currentPosition.lng };
+      geocodeStatus.textContent = '📍 Using your current location';
+      geocodeStatus.className = 'geocode-result geocode-success';
+      showToast('📍 Location set to your current position', 2000);
+      if (map) {
+        map.setView([currentPosition.lat, currentPosition.lng], 15);
+      }
+    } else {
+      showToast('❌ Current location not available. Please enable GPS.', 3000);
+    }
+  });
+
+  geocodeAddressBtn.addEventListener('click', async () => {
+    const address = newAddress.value.trim();
+    if (!address) {
+      showToast('Please enter an address first', 2000);
+      return;
+    }
+    
+    geocodeAddressBtn.disabled = true;
+    geocodeAddressBtn.innerHTML = '<span class="loading-spinner">⟳</span> Geocoding...';
+    geocodeStatus.textContent = '⏳ Geocoding...';
+    geocodeStatus.className = 'geocode-result geocode-pending';
+    
+    try {
+      const coords = await geocodeWithRetry(address);
+      
+      if (coords) {
+        newLat.value = coords.lat.toFixed(6);
+        newLng.value = coords.lng.toFixed(6);
+        lastGeocodeCoords = { lat: coords.lat, lng: coords.lng };
+        geocodeStatus.textContent = `✅ Found: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+        geocodeStatus.className = 'geocode-result geocode-success';
+        showToast('✅ Address geocoded successfully!', 2000);
+        
+        if (map) {
+          map.setView([coords.lat, coords.lng], 15);
+          const tempMarker = L.marker([coords.lat, coords.lng])
+            .addTo(map)
+            .bindPopup('📍 New customer location')
+            .openPopup();
+          setTimeout(() => { map.removeLayer(tempMarker); }, 3000);
+        }
+      } else {
+        geocodeStatus.textContent = '❌ Geocode failed. Please enter coordinates manually or click on map.';
+        geocodeStatus.className = 'geocode-result geocode-failed';
+        showToast('❌ Geocode failed. Enter coordinates manually.', 3000);
+      }
+    } catch (e) {
+      geocodeStatus.textContent = '❌ Error: ' + e.message;
+      geocodeStatus.className = 'geocode-result geocode-failed';
+      showToast('❌ Geocode error', 3000);
+    }
+    
+    geocodeAddressBtn.disabled = false;
+    geocodeAddressBtn.innerHTML = '<i class="fas fa-map-pin"></i> Geocode';
+  });
+
+  async function saveCustomer(continueAdding = false) {
+    const business = newBusiness.value.trim();
+    const address = newAddress.value.trim();
+    const lat = parseFloat(newLat.value);
+    const lng = parseFloat(newLng.value);
+    const status = newStatus.value || 'active';
+    
+    if (!business) {
+      addCustomerStatus.textContent = '❌ Please enter a business name';
+      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
+      showToast('❌ Business name is required', 2000);
+      return;
+    }
+    
+    if (!address) {
+      addCustomerStatus.textContent = '❌ Please enter an address';
+      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
+      showToast('❌ Address is required', 2000);
+      return;
+    }
+    
+    if (!lat || isNaN(lat) || !lng || isNaN(lng)) {
+      addCustomerStatus.textContent = '❌ Please enter valid coordinates or use Geocode/Map to set location';
+      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
+      showToast('❌ Please set coordinates first', 2000);
+      return;
+    }
+    
+    saveCustomerBtn.disabled = true;
+    saveAndContinueBtn.disabled = true;
+    addCustomerStatus.textContent = '⏳ Saving customer...';
+    document.getElementById('addCustomerStatus').style.color = '#475569';
+    
+    const customer = {
+      business: business,
+      contact: newContact.value.trim(),
+      phone: newPhone.value.trim(),
+      address: address,
+      lat: lat,
+      lng: lng,
+      status: status,
+      createdAt: new Date().toISOString()
+    };
+    
+    const saved = await saveCustomerToFirestore(customer);
+    
+    if (saved) {
+      addCustomerStatus.textContent = '✅ Customer saved successfully!';
+      document.getElementById('addCustomerStatus').style.color = '#166534';
+      showToast(`✅ Added: ${business} (${status === 'active' ? '🟢 Active' : '🔴 Inactive'})`, 2000);
+      
+      if (continueAdding) {
+        newBusiness.value = '';
+        newContact.value = '';
+        newPhone.value = '';
+        newAddress.value = '';
+        newLat.value = '';
+        newLng.value = '';
+        newStatus.value = 'active';
+        geocodeStatus.textContent = '⏳ Ready for next customer...';
+        geocodeStatus.className = 'geocode-result geocode-pending';
+        lastGeocodeCoords = null;
+        addCustomerStatus.textContent = '✅ Saved! Enter next customer.';
+        document.getElementById('addCustomerStatus').style.color = '#166534';
+        newBusiness.focus();
+      } else {
+        addCustomerBox.classList.remove('show');
+        clearForm();
+      }
+    } else {
+      addCustomerStatus.textContent = '❌ Failed to save customer. Check console for errors.';
+      document.getElementById('addCustomerStatus').style.color = '#b91c1c';
+      showToast('❌ Failed to save customer', 3000);
+    }
+    
+    saveCustomerBtn.disabled = false;
+    saveAndContinueBtn.disabled = false;
+  }
+
+  saveCustomerBtn.addEventListener('click', () => saveCustomer(false));
+  saveAndContinueBtn.addEventListener('click', () => saveCustomer(true));
+
+  // ----- Update Customer Status -----
+  async function updateCustomerStatus(id, newStatus) {
+    if (!currentUser) return;
+    try {
+      await db.collection('customers').doc(id).update({ status: newStatus });
+      const customer = customers.find(c => c.id === id);
+      if (customer) {
+        customer.status = newStatus;
+        applyFilters();
+        showToast(`✅ Status updated to ${newStatus === 'active' ? '🟢 Active' : '🔴 Inactive'}`, 2000);
+        debugLog(`Customer ${customer.business} status changed to ${newStatus}`);
+      }
+    } catch (e) {
+      debugLog(`Status update error: ${e.message}`, true);
+      showToast('❌ Failed to update status', 3000);
+    }
+  }
+
+  // ----- GEOCODING -----
+  let geocodeCache = new Map();
+  
+  async function geocodeWithRetry(address, maxRetries = 3) {
+    const cacheKey = address.toLowerCase().trim();
+    if (geocodeCache.has(cacheKey)) {
+      return geocodeCache.get(cacheKey);
+    }
+    
+    const cleanAddress = address.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const coords = await geocodeWithOpenStreetMap(cleanAddress);
+        if (coords) {
+          geocodeCache.set(cacheKey, coords);
+          return coords;
+        }
+        
+        const parts = cleanAddress.split(' ');
+        if (parts.length > 3) {
+          const simplified = parts.slice(0, Math.min(parts.length, 4)).join(' ');
+          const coords2 = await geocodeWithOpenStreetMap(simplified);
+          if (coords2) {
+            geocodeCache.set(cacheKey, coords2);
+            return coords2;
+          }
+        }
+        
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+      } catch (e) {
+        debugLog(`Geocode attempt ${attempt} failed: ${e.message}`, true);
+      }
+    }
+    
+    return null;
+  }
+
+  async function geocodeWithOpenStreetMap(address) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lng)
+        };
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  // ----- FIX ALL LOCATIONS -----
+  async function fixAllLocations() {
+    if (!currentUser || customers.length === 0) {
+      showToast('No customers to fix', 2000);
+      return;
+    }
+
+    if (!confirm(`Fix locations for ${customers.length} customers?`)) return;
+
+    fixLocationsBtn.disabled = true;
+    fixLocationsBtn.innerHTML = '<span class="loading-spinner">⟳</span> Fixing...';
+    importStatus.style.display = 'block';
+    importProgress.textContent = 'Fixing locations...';
+    importProgressBar.style.width = '0%';
+    
+    let successCount = 0;
+    let failCount = 0;
+    let unchangedCount = 0;
+    const total = customers.length;
+
+    for (let i = 0; i < customers.length; i++) {
+      const c = customers[i];
+      const progress = ((i + 1) / total * 100);
+      importProgressBar.style.width = progress + '%';
+      importProgress.textContent = `Processing ${i+1}/${total}: ${c.business || 'Unknown'}`;
+      importStats.textContent = `✅ ${successCount} fixed, ⏭️ ${unchangedCount} unchanged, ❌ ${failCount} failed`;
+
+      if (!c.address || c.address.trim() === '') {
+        unchangedCount++;
+        continue;
+      }
+
+      try {
+        const coords = await geocodeWithRetry(c.address);
+        
+        if (coords) {
+          const currentLat = c.lat || 0;
+          const currentLng = c.lng || 0;
+          const diff = Math.abs(currentLat - coords.lat) + Math.abs(currentLng - coords.lng);
+          
+          if (diff > 0.001) {
+            await db.collection('customers').doc(c.id).update({
+              lat: coords.lat,
+              lng: coords.lng
+            });
+            c.lat = coords.lat;
+            c.lng = coords.lng;
+            successCount++;
+          } else {
+            unchangedCount++;
+          }
+        } else {
+          failCount++;
+        }
+      } catch (e) {
+        failCount++;
+      }
+      
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    importStatus.style.display = 'none';
+    fixLocationsBtn.disabled = false;
+    fixLocationsBtn.innerHTML = '<i class="fas fa-wrench"></i> Fix All Locations';
+    
+    loadStatus.textContent = `✅ Complete: ${successCount} fixed, ${unchangedCount} unchanged, ${failCount} failed`;
+    showToast(`✅ Fixed ${successCount} locations!`, 3000);
+    
+    applyFilters();
+    if (map) {
+      map.invalidateSize();
+      setTimeout(fitMarkersBtn.click, 500);
+    }
+  }
+
+  // ----- INIT APP -----
+  async function initApp() {
+    await loadCustomersFromFirestore();
+    getLocationAndUpdate();
+    applyFilters();
+    setTimeout(() => initMap(), 500);
+    debugLog('App initialized');
+  }
+
+  // ----- FIRESTORE OPERATIONS -----
+  async function loadCustomersFromFirestore() {
+    if (!currentUser) return;
+    try {
+      const snapshot = await db.collection('customers')
+        .where('userId', '==', currentUser.uid)
+        .get();
+      customers = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (!data.status) {
+          data.status = 'active';
+        }
+        customers.push({ id: doc.id, ...data });
+      });
+      debugLog(`Loaded ${customers.length} customers`);
+      customerCount.textContent = customers.length;
+      applyFilters();
+    } catch (e) {
+      debugLog(`Load error: ${e.message}`, true);
+    }
+  }
+
+  async function saveCustomerToFirestore(customer) {
+    if (!currentUser) return false;
+    if (!customer.status) {
+      customer.status = 'active';
+    }
+    const data = { ...customer, userId: currentUser.uid };
+    try {
+      const docRef = await db.collection('customers').add(data);
+      customer.id = docRef.id;
+      customers.push(customer);
+      customerCount.textContent = customers.length;
+      applyFilters();
+      return true;
+    } catch (e) { 
+      debugLog(`Save error: ${e.message}`, true);
+      return false;
+    }
+  }
+
+  async function deleteCustomerFromFirestore(id) {
+    if (!currentUser) return;
+    try {
+      await db.collection('customers').doc(id).delete();
+      customers = customers.filter(c => c.id !== id);
+      customerCount.textContent = customers.length;
+      applyFilters();
+    } catch (e) { console.warn('Delete error', e); }
+  }
+
+  // ----- CSV IMPORT -----
+  function importCSV(file) {
+    debugLog('=== Starting CSV Import ===');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const csvText = e.target.result;
+      let parsedData = [];
+      
+      try {
+        const results = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          trimHeaders: true,
+          transformHeader: (h) => h.trim().toLowerCase()
+        });
+        if (results.data && results.data.length > 0) {
+          parsedData = results.data;
+          debugLog(`Parsed ${parsedData.length} rows`);
+        }
+      } catch (err) {
+        debugLog(`Parse error: ${err.message}`, true);
+        showToast('❌ CSV Parse Error: ' + err.message, 3000);
+        return;
+      }
+      
+      if (parsedData.length === 0) {
+        showToast('❌ No data parsed from CSV', 3000);
+        return;
+      }
+      
+      importStatus.style.display = 'block';
+      importProgress.textContent = 'Starting import...';
+      importProgressBar.style.width = '0%';
+      importStats.textContent = '';
+      
+      let processed = 0;
+      let added = 0;
+      let failed = 0;
+      let geocodeFailed = 0;
+      const total = parsedData.length;
+      
+      parsedData.forEach((row, index) => {
+        const business = row.business || row.name || row.store || 'Unknown';
+        const contact = row.contact || row['contact person'] || '';
+        const phone = row.phone || row['contact number'] || row['telephone'] || '';
+        const address = row.address || row.location || '';
+        let status = row.status || row['status'] || 'active';
+        status = (status === 'inactive') ? 'inactive' : 'active';
+        
+        let lat = parseFloat(row.lat) || parseFloat(row.latitude) || null;
+        let lng = parseFloat(row.lng) || parseFloat(row.longitude) || null;
+        
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+          const cust = { 
+            business: business.trim() || 'Unknown', 
+            contact: contact.trim() || '', 
+            phone: phone.trim() || '', 
+            address: address.trim() || '', 
+            lat: lat, 
+            lng: lng,
+            status: status
+          };
+          saveCustomerToFirestore(cust).then(saved => {
+            if (saved) added++; else failed++;
+            processed++;
+            updateProgress();
+          });
+        } else if (address && address.trim() !== '') {
+          importProgress.textContent = `Geocoding ${index+1}/${total}: ${business.substring(0, 30)}...`;
+          
+          geocodeWithRetry(address).then(async (coords) => {
+            const cust = { 
+              business: business.trim() || 'Unknown', 
+              contact: contact.trim() || '', 
+              phone: phone.trim() || '', 
+              address: address.trim(), 
+              lat: coords ? coords.lat : null, 
+              lng: coords ? coords.lng : null,
+              status: status
+            };
+            
+            if (!coords) {
+              geocodeFailed++;
+              debugLog(`⚠️ Geocode failed: ${address.substring(0, 50)}...`, true);
+            }
+            
+            const saved = await saveCustomerToFirestore(cust);
+            if (saved) added++; else failed++;
+            processed++;
+            updateProgress();
+          });
+        } else {
+          failed++;
+          processed++;
+          updateProgress();
+        }
+        
+        function updateProgress() {
+          const progress = Math.min((processed / total * 100), 100);
+          importProgressBar.style.width = progress + '%';
+          importProgress.textContent = `Processing ${processed}/${total} rows...`;
+          importStats.textContent = `✅ ${added} added, ❌ ${failed} failed${geocodeFailed > 0 ? `, 🌍 ${geocodeFailed} geocode failed` : ''}`;
+          
+          if (processed >= total) {
+            setTimeout(() => {
+              importStatus.style.display = 'none';
+              const msg = `✅ Import complete: ${added} added, ${failed} failed${geocodeFailed > 0 ? ` (${geocodeFailed} geocode failed)` : ''}`;
+              loadStatus.textContent = msg;
+              showToast(`✅ Imported ${added} customers!`, 3000);
+              debugLog(`Import complete: ${added} added, ${failed} failed`);
+              applyFilters();
+              if (map) { map.invalidateSize(); setTimeout(fitMarkersBtn.click, 500); }
+            }, 500);
+          }
+        }
+      });
+    };
+    reader.readAsText(file);
+  }
+
+  // ----- SAMPLE DATA -----
+  async function loadSampleData() {
+    if (!currentUser) {
+      showToast('Please sign in first', 3000);
+      return;
+    }
+
+    loadSampleBtn.disabled = true;
+    loadSampleBtn.innerHTML = '<span class="loading-spinner">⟳</span> Loading...';
+    loadStatus.textContent = 'Loading sample customers...';
+    
+    const sampleCustomers = [
+      { business: 'KLCC Mall', contact: 'John Tan', phone: '012-345-6789', address: 'Kuala Lumpur City Centre', lat: 3.1579, lng: 101.7117, status: 'active' },
+      { business: 'Sunway Pyramid', contact: 'Sarah Lee', phone: '012-345-6780', address: 'Bandar Sunway, Petaling Jaya', lat: 3.0736, lng: 101.6075, status: 'active' },
+      { business: 'Mid Valley Megamall', contact: 'David Wong', phone: '012-345-6781', address: 'Mid Valley City, Kuala Lumpur', lat: 3.1205, lng: 101.6770, status: 'inactive' },
+      { business: 'IOI Mall Puchong', contact: 'Amy Tan', phone: '012-345-6782', address: 'Bandar Puchong Jaya', lat: 3.0444, lng: 101.6197, status: 'active' },
+      { business: '1 Utama', contact: 'Michael Lim', phone: '012-345-6783', address: 'Bandar Utama, Petaling Jaya', lat: 3.1406, lng: 101.6121, status: 'inactive' },
+      { business: 'Pavilion KL', contact: 'Christina Ong', phone: '012-345-6784', address: 'Bukit Bintang, Kuala Lumpur', lat: 3.1488, lng: 101.7130, status: 'active' }
+    ];
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const cust of sampleCustomers) {
+      const saved = await saveCustomerToFirestore(cust);
+      if (saved) successCount++; else failCount++;
+      loadStatus.textContent = `Added ${successCount}/${sampleCustomers.length} customers...`;
+    }
+    
+    await loadCustomersFromFirestore();
+    
+    loadSampleBtn.disabled = false;
+    loadSampleBtn.innerHTML = '<i class="fas fa-database"></i> Load sample';
+    
+    if (successCount > 0) {
+      loadStatus.textContent = `✅ Added ${successCount} sample customers`;
+      showToast(`✅ Added ${successCount} sample customers!`, 3000);
+    } else {
+      loadStatus.textContent = '❌ Failed to add sample customers';
+      showToast('❌ Failed to add sample customers', 3000);
+    }
+    
+    applyFilters();
+    if (map) { map.invalidateSize(); setTimeout(fitMarkersBtn.click, 500); }
+  }
+
+  // ----- GPS -----
+  function getLocationAndUpdate() {
+    gpsStatus.innerHTML = '<span class="loading-spinner">⟳</span> Locating...';
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          coordsDisplay.textContent = `📍 ${currentPosition.lat.toFixed(5)}, ${currentPosition.lng.toFixed(5)}`;
+          gpsStatus.innerHTML = '<i class="fas fa-check-circle" style="color:#22c55e;"></i> GPS active';
+          if (map) {
+            map.setView([currentPosition.lat, currentPosition.lng], 14);
+            updateUserMarker();
+            setTimeout(fitMarkersBtn.click, 500);
+          }
+          applyFilters();
+        },
+        (err) => {
+          gpsStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#eab308;"></i> GPS unavailable';
+          coordsDisplay.textContent = '⚠️ Enable location';
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      gpsStatus.innerHTML = '❌ GPS not supported';
+    }
+  }
+
+  refreshLocationBtn.addEventListener('click', getLocationAndUpdate);
+
+  // ----- DISTANCE -----
+  function haversine(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ----- RENDER -----
+  function renderCustomers() {
+    if (!currentUser) return;
+    
+    const total = customers.length;
+    const activeCount = customers.filter(c => c.status === 'active').length;
+    const inactiveCount = customers.filter(c => c.status === 'inactive').length;
+    
+    countAll.textContent = total;
+    countActive.textContent = activeCount;
+    countInactive.textContent = inactiveCount;
+    
+    const filtered = getFilteredCustomers();
+    
+    if (filtered.length === 0) {
+      let msg = 'No customers. Import CSV or add manually.';
+      if (customers.length > 0) {
+        if (currentRadius > 0) {
+          msg = `No customers within ${currentRadius}km radius.`;
+        } else {
+          msg = currentFilter === 'all' ? 'No customers found.' : `No ${currentFilter} customers found.`;
+        }
+      }
+      customerList.innerHTML = `<div class="text-sm" style="color:#64748b;">${msg}</div>`;
+      customerCount.textContent = customers.length;
+      return;
+    }
+    
+    let html = '';
+    const sorted = [...filtered];
+    if (currentPosition) {
+      sorted.sort((a,b) => {
+        const dA = haversine(currentPosition.lat, currentPosition.lng, a.lat || 0, a.lng || 0);
+        const dB = haversine(currentPosition.lat, currentPosition.lng, b.lat || 0, b.lng || 0);
+        return dA - dB;
+      });
+    }
+    
+    const displayCustomers = sorted.slice(0, 50);
+    let filterLabel = currentFilter === 'all' ? 'all customers' : `${currentFilter} customers`;
+    if (currentRadius > 0) {
+      filterLabel += ` within ${currentRadius}km`;
+    }
+    html = `<div class="text-sm" style="color:#64748b; margin-bottom:8px;">Showing ${displayCustomers.length} of ${sorted.length} ${filterLabel} - Click any customer to show on map</div>`;
+    
+    displayCustomers.forEach(c => {
+      let dist = 'N/A';
+      let distKm = 0;
+      let hasValidCoords = c.lat && c.lng && !isNaN(c.lat) && !isNaN(c.lng) && c.lat !== 0 && c.lng !== 0;
+      
+      if (currentPosition && hasValidCoords) {
+        distKm = haversine(currentPosition.lat, currentPosition.lng, c.lat, c.lng);
+        dist = distKm < 1 ? (distKm*1000).toFixed(0)+' m' : distKm.toFixed(1)+' km';
+      }
+      
+      const isNear = (hasValidCoords && distKm < 2) ? '⭐' : '';
+      const coordsText = hasValidCoords ? `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}` : '⚠️ No coordinates';
+      const isSelected = selectedCustomerId === c.id ? 'selected-customer' : '';
+      const status = c.status || 'active';
+      const statusClass = status === 'active' ? 'status-active' : 'status-inactive';
+      const statusLabel = status === 'active' ? '🟢 Active' : '🔴 Inactive';
+      
+      html += `
+        <div class="customer-item ${isSelected}" data-customer-id="${c.id}" onclick="handleCustomerClick('${c.id}')">
+          <div class="customer-row">
+            <div class="customer-info">
+              <strong>${c.business || 'Unnamed'} ${isNear}</strong>
+              <span class="status-tag ${statusClass}">${statusLabel}</span>
+              <span><i class="far fa-user"></i> ${c.contact || '—'}</span>
+              <span><i class="fas fa-phone-alt"></i> ${c.phone || '—'}</span>
+              <span class="address"><i class="fas fa-map-marker-alt"></i> ${c.address || 'No address'}</span>
+              <span class="coords"><i class="fas fa-globe"></i> ${coordsText}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <span class="distance-badge"><i class="fas fa-route"></i> ${dist}</span>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button class="view-on-map-btn" onclick="event.stopPropagation(); handleCustomerClick('${c.id}')">
+                  <i class="fas fa-map-marker-alt"></i> View
+                </button>
+                <button class="btn-outline" style="padding:4px 10px; font-size:0.7rem; border-color:#d1d5db;" onclick="event.stopPropagation(); toggleCustomerStatus('${c.id}', '${status}')">
+                  <i class="fas fa-toggle-${status === 'active' ? 'on' : 'off'}"></i> ${status === 'active' ? 'Set Inactive' : 'Set Active'}
+                </button>
+                <button class="btn-outline" style="padding:4px 10px; font-size:0.7rem; border-color:#ef4444; color:#ef4444;" onclick="event.stopPropagation(); deleteCustomer('${c.id}')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    customerList.innerHTML = html;
+    customerCount.textContent = customers.length;
+  }
+
+  // Toggle customer status
+  window.toggleCustomerStatus = function(id, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    updateCustomerStatus(id, newStatus);
+  };
+
+  // Global functions for onclick
+  window.handleCustomerClick = function(customerId) {
+    showCustomerOnMap(customerId);
+  };
+
+  window.deleteCustomer = function(id) {
+    if (confirm('Delete customer?')) {
+      deleteCustomerFromFirestore(id);
+    }
+  };
+
+  // ----- MAP MARKERS WITH FILTER -----
+  function updateMapMarkers() {
+    if (!map) return;
+    
+    customerMarkers.forEach(m => { try { map.removeLayer(m); } catch(e) {} });
+    customerMarkers = [];
+    
+    const filtered = getFilteredCustomers();
+    
+    let addedCount = 0;
+    
+    filtered.forEach(c => {
+      if (c.lat && c.lng && !isNaN(c.lat) && !isNaN(c.lng) && c.lat !== 0 && c.lng !== 0) {
+        try {
+          const status = c.status || 'active';
+          const statusEmoji = status === 'active' ? '🟢' : '🔴';
+          const statusText = status === 'active' ? 'Active' : 'Inactive';
+          
+          const markerColor = status === 'active' ? '#22c55e' : '#94a3b8';
+          const markerIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background:${markerColor}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+          
+          const popupText = `<b>${c.business || 'Unknown'}</b><br>${c.address || ''}<br>${statusEmoji} ${statusText}`;
+          
+          const marker = L.marker([c.lat, c.lng], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(popupText);
+          
+          marker.on('click', function() {
+            showCustomerOnMap(c.id);
+          });
+          
+          customerMarkers.push(marker);
+          addedCount++;
+        } catch(e) {
+          debugLog(`Error adding marker for ${c.business}: ${e.message}`, true);
+        }
+      }
+    });
+    
+    const filterLabel = currentFilter === 'all' ? 'All' : currentFilter;
+    const radiusLabel = currentRadius > 0 ? ` (${currentRadius}km)` : '';
+    mapMarkerCount.textContent = `${addedCount} markers shown${radiusLabel}`;
+    
+    debugLog(`Added ${addedCount} markers to map (filter: ${currentFilter}, radius: ${currentRadius})`);
+  }
+
+  // ----- CREATE ADMIN -----
+  async function createAdminUser() {
+    const adminEmail = 'admin@tracker.com';
+    const adminPassword = 'Admin123';
+    const adminDisplayName = 'Admin';
+    
+    authError.classList.remove('show');
+    authSuccess.style.display = 'none';
+    createAdminBtn.disabled = true;
+    createAdminBtn.innerHTML = '<span class="loading-spinner">⟳</span> Creating...';
+    
+    try {
+      const adminDoc = await db.collection('users').doc('admin').get();
+      if (adminDoc.exists) {
+        authSuccess.textContent = '✅ Admin account already exists! Please sign in.';
+        authSuccess.style.display = 'block';
+        createAdminBtn.disabled = false;
+        createAdminBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Admin Account';
+        return;
+      }
+      
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(adminEmail, adminPassword);
+        const user = userCredential.user;
+        await user.updateProfile({ displayName: adminDisplayName });
+        await db.collection('users').doc('admin').set({
+          uid: user.uid,
+          email: adminEmail,
+          displayName: adminDisplayName,
+          role: 'admin',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        authSuccess.textContent = '✅ Admin account created! Please sign in.';
+        authSuccess.style.display = 'block';
+        await auth.signOut();
+      } catch (authError) {
+        if (authError.code === 'auth/email-already-in-use') {
+          authSuccess.textContent = '⚠️ Admin email already exists. Please sign in.';
+          authSuccess.style.display = 'block';
+        } else {
+          authError.textContent = authError.message;
+          authError.classList.add('show');
+        }
+      }
+    } catch (error) {
+      authError.textContent = 'Error: ' + error.message;
+      authError.classList.add('show');
+    }
+    
+    createAdminBtn.disabled = false;
+    createAdminBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Admin Account';
+  }
+
+  // ----- AUTH -----
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const pass = passwordInput.value;
+    authError.classList.remove('show');
+    authSuccess.style.display = 'none';
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="loading-spinner">⟳</span> Signing in...';
+    
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        authError.textContent = '❌ User not found. Click "Create Admin Account" to set up.';
+        authError.classList.add('show');
+      } else {
+        authError.textContent = err.message;
+        authError.classList.add('show');
+      }
+    }
+    
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign in';
+  });
+
+  createAdminBtn.addEventListener('click', createAdminUser);
+
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      currentUser = user;
+      authCard.style.display = 'none';
+      appContainer.style.display = 'block';
+      setupInfo.classList.remove('show');
+      
+      try {
+        const adminDoc = await db.collection('users').doc('admin').get();
+        if (adminDoc.exists && adminDoc.data().uid === user.uid) isAdmin = true;
+      } catch (e) {}
+      
+      userGreeting.textContent = `👋 ${user.displayName || user.email}${isAdmin ? ' ⭐ Admin' : ''}`;
+      initApp();
+    } else {
+      currentUser = null;
+      authCard.style.display = 'block';
+      appContainer.style.display = 'none';
+      customers = [];
+      customerList.innerHTML = `<div class="text-sm">Sign in to view customers.</div>`;
+      customerCount.textContent = '0';
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+    authCard.style.display = 'block';
+    appContainer.style.display = 'none';
+  });
+
+  // ----- STATE -----
+  let customers = [];
+  let currentPosition = null;
+  let currentUser = null;
+  let isAdmin = false;
+  let toastTimeout = null;
+
+  function showToast(message, duration = 3000) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, duration);
+  }
+
+  // ----- EVENTS -----
+  fileInput.addEventListener('change', (e) => {
+    if (fileInput.files.length > 0) {
+      loadStatus.textContent = 'Importing with auto-geocode...';
+      importCSV(fileInput.files[0]);
+      fileInput.value = '';
+    }
+  });
+
+  loadSampleBtn.addEventListener('click', loadSampleData);
+  
+  downloadSampleBtn.addEventListener('click', () => {
+    const sampleData = `business,contact,phone,address,status
+Sunny Bakery,Lisa Wong,555-1234,"150 5th Ave, New York, NY 10011",active
+Harbor Cafe,Mike Chen,555-5678,"300 Water St, Brooklyn, NY 11201",active
+Green Grocery,Anna Smith,555-9012,"80 Kent Ave, Brooklyn, NY 11211",inactive`;
+    const blob = new Blob([sampleData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'customers_with_status.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('📥 Sample CSV downloaded!', 2000);
+  });
+
+  fixLocationsBtn.addEventListener('click', fixAllLocations);
+
+  window.addEventListener('resize', () => { if (map) setTimeout(() => map.invalidateSize(), 100); });
+
+  debugLog('App initialized. Please sign in.');
+</script>
+</body>
+</html>
