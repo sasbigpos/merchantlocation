@@ -130,6 +130,11 @@
     .radius-clear-btn:hover { background: #dc2626; }
     .radius-apply-btn { background: #2563eb; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; }
     .radius-apply-btn:hover { background: #1d4ed8; }
+    .waze-btn { background: #33ccff; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .waze-btn:hover { background: #1a8cbf; }
+    .google-maps-btn { background: #34a853; color: white; border: none; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .google-maps-btn:hover { background: #1e7e34; }
+    .nav-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
     @media (max-width: 640px) { .add-customer-box .form-row { grid-template-columns: 1fr; } .add-customer-box .form-row-3 { grid-template-columns: 1fr; } .flex-row { flex-direction: column; align-items: stretch; } #map { height: 250px; } .radius-filter input[type="range"] { width: 100px; } .radius-filter input[type="number"] { width: 70px; } }
   </style>
 </head>
@@ -406,7 +411,7 @@
 
   // Filter state
   let currentFilter = 'all';
-  let currentRadius = 0; // 0 means no radius filter
+  let currentRadius = 0;
 
   // Debug logging
   let debugLogs = [];
@@ -429,16 +434,76 @@
     }
   });
 
-  // Filter function
-  window.setFilter = function(filter) {
+  // WAZE NAVIGATION FUNCTION
+  function navigateWithWaze(lat, lng, businessName) {
+    if (!lat || !lng) {
+      showToast('❌ No coordinates available for this customer', 3000);
+      return;
+    }
+    
+    // Check if on mobile or desktop
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    // Waze URL schemes
+    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+    const wazeAppUrl = `waze://?ll=${lat},${lng}&navigate=yes`;
+    
+    try {
+      if (isMobile) {
+        // Try to open Waze app first
+        const appLink = document.createElement('a');
+        appLink.href = wazeAppUrl;
+        appLink.target = '_blank';
+        document.body.appendChild(appLink);
+        appLink.click();
+        document.body.removeChild(appLink);
+        
+        // Fallback to web if app doesn't open
+        setTimeout(() => {
+          // If app didn't open, try web version
+          const webLink = document.createElement('a');
+          webLink.href = wazeUrl;
+          webLink.target = '_blank';
+          document.body.appendChild(webLink);
+          webLink.click();
+          document.body.removeChild(webLink);
+        }, 2000);
+      } else {
+        // On desktop, open web version
+        window.open(wazeUrl, '_blank');
+      }
+      
+      showToast(`🗺️ Opening Waze to ${businessName || 'location'}`, 3000);
+      debugLog(`Opening Waze to: ${lat}, ${lng}`);
+    } catch (e) {
+      // Fallback to web version
+      window.open(wazeUrl, '_blank');
+      showToast(`🗺️ Opening Waze web version`, 3000);
+    }
+  }
+
+  // GOOGLE MAPS NAVIGATION FUNCTION
+  function navigateWithGoogleMaps(lat, lng, businessName) {
+    if (!lat || !lng) {
+      showToast('❌ No coordinates available for this customer', 3000);
+      return;
+    }
+    
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    window.open(googleMapsUrl, '_blank');
+    showToast(`🗺️ Opening Google Maps to ${businessName || 'location'}`, 3000);
+    debugLog(`Opening Google Maps to: ${lat}, ${lng}`);
+  }
+
+  // ----- FILTER FUNCTIONS -----
+  function setFilter(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.filter === filter);
     });
     applyFilters();
-  };
+  }
 
-  // Apply radius filter
   function applyRadius() {
     let value = parseFloat(radiusInput.value);
     if (isNaN(value) || value < 0) value = 0;
@@ -454,11 +519,9 @@
     applyFilters();
   }
 
-  // Sync slider and input
   radiusSlider.addEventListener('input', function() {
     const value = parseFloat(this.value);
     radiusInput.value = value;
-    // Don't auto-apply - wait for Apply button
   });
 
   radiusInput.addEventListener('change', function() {
@@ -467,7 +530,6 @@
     if (value > 999) value = 999;
     this.value = value;
     radiusSlider.value = Math.min(value, 100);
-    // Don't auto-apply - wait for Apply button
   });
 
   radiusInput.addEventListener('keypress', function(e) {
@@ -487,18 +549,15 @@
     showToast('✅ Radius filter cleared', 2000);
   });
 
-  // Get filtered customers based on status and radius
   function getFilteredCustomers() {
     let filtered = customers;
     
-    // Apply status filter
     if (currentFilter === 'active') {
       filtered = filtered.filter(c => c.status === 'active');
     } else if (currentFilter === 'inactive') {
       filtered = filtered.filter(c => c.status === 'inactive');
     }
     
-    // Apply radius filter - only if radius > 0 AND we have a position
     if (currentRadius > 0 && currentPosition) {
       filtered = filtered.filter(c => {
         if (!c.lat || !c.lng || isNaN(c.lat) || isNaN(c.lng)) return false;
@@ -510,11 +569,9 @@
     return filtered;
   }
 
-  // Apply all filters (status + radius)
   function applyFilters() {
     const filtered = getFilteredCustomers();
     
-    // Update radius count
     if (currentRadius > 0 && currentPosition) {
       radiusCount.textContent = `${filtered.length} customers within ${currentRadius}km`;
     } else if (currentRadius > 0 && !currentPosition) {
@@ -687,6 +744,15 @@
         ${customer.address || 'No address'}<br>
         <span style="font-size:0.8rem; color:#64748b;">${customer.lat.toFixed(5)}, ${customer.lng.toFixed(5)}</span><br>
         <span style="font-size:0.8rem;">${statusEmoji} ${statusText}</span>
+        <br><br>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="navigateWithWaze(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
+            <i class="fas fa-car"></i> Waze
+          </button>
+          <button onclick="navigateWithGoogleMaps(${customer.lat}, ${customer.lng}, '${customer.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
+            <i class="fas fa-map"></i> Google Maps
+          </button>
+        </div>
       `)
       .openPopup();
     
@@ -1370,6 +1436,12 @@
                 <button class="view-on-map-btn" onclick="event.stopPropagation(); handleCustomerClick('${c.id}')">
                   <i class="fas fa-map-marker-alt"></i> View
                 </button>
+                <button class="waze-btn" onclick="event.stopPropagation(); navigateWithWaze(${c.lat || 0}, ${c.lng || 0}, '${c.business}')">
+                  <i class="fas fa-car"></i> Waze
+                </button>
+                <button class="google-maps-btn" onclick="event.stopPropagation(); navigateWithGoogleMaps(${c.lat || 0}, ${c.lng || 0}, '${c.business}')">
+                  <i class="fas fa-map"></i> Maps
+                </button>
                 <button class="btn-outline" style="padding:4px 10px; font-size:0.7rem; border-color:#d1d5db;" onclick="event.stopPropagation(); toggleCustomerStatus('${c.id}', '${status}')">
                   <i class="fas fa-toggle-${status === 'active' ? 'on' : 'off'}"></i> ${status === 'active' ? 'Set Inactive' : 'Set Active'}
                 </button>
@@ -1403,6 +1475,10 @@
     }
   };
 
+  // Make navigation functions global for popup buttons
+  window.navigateWithWaze = navigateWithWaze;
+  window.navigateWithGoogleMaps = navigateWithGoogleMaps;
+
   // ----- MAP MARKERS WITH FILTER -----
   function updateMapMarkers() {
     if (!map) return;
@@ -1429,7 +1505,20 @@
             iconAnchor: [8, 8]
           });
           
-          const popupText = `<b>${c.business || 'Unknown'}</b><br>${c.address || ''}<br>${statusEmoji} ${statusText}`;
+          const popupText = `
+            <b>${c.business || 'Unknown'}</b><br>
+            ${c.address || ''}<br>
+            ${statusEmoji} ${statusText}
+            <br><br>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button onclick="navigateWithWaze(${c.lat}, ${c.lng}, '${c.business}')" style="background:#33ccff; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
+                <i class="fas fa-car"></i> Waze
+              </button>
+              <button onclick="navigateWithGoogleMaps(${c.lat}, ${c.lng}, '${c.business}')" style="background:#34a853; color:white; border:none; padding:6px 14px; border-radius:30px; font-size:0.75rem; cursor:pointer;">
+                <i class="fas fa-map"></i> Google Maps
+              </button>
+            </div>
+          `;
           
           const marker = L.marker([c.lat, c.lng], { icon: markerIcon })
             .addTo(map)
