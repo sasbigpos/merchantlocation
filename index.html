@@ -731,6 +731,27 @@
   window.currentPage = currentPage;
   window.currentPageSmall = currentPageSmall;
 
+  // ====== UPDATE STATUS COUNTS ======
+  window.updateStatusCounts = function() {
+    var total = customers.length;
+    var activeCount = customers.filter(function(c) { return c.status === 'active'; }).length;
+    var inactiveCount = customers.filter(function(c) { return c.status === 'inactive'; }).length;
+    
+    // Update map view counts
+    document.getElementById('countAllSmall').textContent = total;
+    document.getElementById('countActiveSmall').textContent = activeCount;
+    document.getElementById('countInactiveSmall').textContent = inactiveCount;
+    
+    // Update full list counts
+    document.getElementById('countAll').textContent = total;
+    document.getElementById('countActive').textContent = activeCount;
+    document.getElementById('countInactive').textContent = inactiveCount;
+    
+    // Update customer count badge in header
+    document.getElementById('customerCount').textContent = total;
+    document.getElementById('listTotalCount').textContent = total + ' customers';
+  };
+
   // ====== NAVIGATION FUNCTIONS ======
   window.navigateWithWaze = function(lat, lng, businessName) {
     if (!lat || !lng) {
@@ -1064,15 +1085,7 @@
         customers.push(data);
       });
       
-      document.getElementById('customerCount').textContent = customers.length;
-      document.getElementById('listTotalCount').textContent = customers.length + ' customers';
-      
-      var activeCount = customers.filter(function(c) { return c.status === 'active'; }).length;
-      var inactiveCount = customers.filter(function(c) { return c.status === 'inactive'; }).length;
-      document.getElementById('countAllSmall').textContent = customers.length;
-      document.getElementById('countActiveSmall').textContent = activeCount;
-      document.getElementById('countInactiveSmall').textContent = inactiveCount;
-      
+      window.updateStatusCounts();
       window.applyFilters();
       
       var orphanCustomers = customers.filter(function(c) { return !c.userId; });
@@ -1261,11 +1274,7 @@
     filteredCustomers = getFilteredCustomers();
     var total = filteredCustomers.length;
     
-    var activeCount = customers.filter(function(c) { return c.status === 'active'; }).length;
-    var inactiveCount = customers.filter(function(c) { return c.status === 'inactive'; }).length;
-    document.getElementById('countAll').textContent = customers.length;
-    document.getElementById('countActive').textContent = activeCount;
-    document.getElementById('countInactive').textContent = inactiveCount;
+    window.updateStatusCounts();
     
     if (currentRadius > 0 && currentPosition) {
       document.getElementById('radiusCount').textContent = filteredCustomers.length + ' customers within ' + currentRadius + 'km';
@@ -1623,27 +1632,33 @@
     var lat = parseFloat(document.getElementById('editLat').value);
     var lng = parseFloat(document.getElementById('editLng').value);
     var status = document.getElementById('editStatus').value || 'active';
+    var contact = document.getElementById('editContact').value.trim();
+    var phone = document.getElementById('editPhone').value.trim();
+    
     if (!business || !address || isNaN(lat) || isNaN(lng)) {
       window.showToast('❌ Please fill all required fields', 2000);
       return;
     }
+    
     var btn = document.getElementById('saveEditBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading-spinner">⟳</span> Saving...';
+    
     db.collection('customers').doc(editingCustomerId).update({
       business: business,
-      contact: document.getElementById('editContact').value.trim(),
-      phone: document.getElementById('editPhone').value.trim(),
+      contact: contact,
+      phone: phone,
       address: address,
       lat: lat,
       lng: lng,
       status: status
     }).then(function() {
+      // Update local customer data
       for (var i = 0; i < customers.length; i++) {
         if (customers[i].id === editingCustomerId) {
           customers[i].business = business;
-          customers[i].contact = document.getElementById('editContact').value.trim();
-          customers[i].phone = document.getElementById('editPhone').value.trim();
+          customers[i].contact = contact;
+          customers[i].phone = phone;
           customers[i].address = address;
           customers[i].lat = lat;
           customers[i].lng = lng;
@@ -1651,9 +1666,15 @@
           break;
         }
       }
-      window.showToast('✅ Customer updated', 2000);
-      window.closeEditModal();
+      
+      // Update all counts and views
+      window.updateStatusCounts();
       window.applyFilters();
+      window.renderCustomerListSmall();
+      window.updateMapMarkers();
+      
+      window.showToast('✅ Customer updated - Status: ' + status, 3000);
+      window.closeEditModal();
     }).catch(function(e) {
       window.showToast('❌ Error: ' + e.message, 3000);
     }).finally(function() {
@@ -1719,9 +1740,15 @@
                 break;
               }
             }
-            window.showToast('✅ Geocoded and saved successfully!', 3000);
-            window.closeEditModal();
+            
+            // Update all counts and views
+            window.updateStatusCounts();
             window.applyFilters();
+            window.renderCustomerListSmall();
+            window.updateMapMarkers();
+            
+            window.showToast('✅ Geocoded and saved! Status: ' + status, 3000);
+            window.closeEditModal();
           }).catch(function(e) {
             window.showToast('❌ Error saving: ' + e.message, 3000);
           }).finally(function() {
@@ -1827,6 +1854,10 @@
     db.collection('customers').add(customer).then(function(docRef) {
       customer.id = docRef.id;
       customers.push(customer);
+      window.updateStatusCounts();
+      window.applyFilters();
+      window.renderCustomerListSmall();
+      window.updateMapMarkers();
       window.showToast('✅ Customer added: ' + business, 2000);
       if (continueAdding) {
         window.clearForm();
@@ -1836,7 +1867,6 @@
         document.getElementById('addCustomerStatus').textContent = '';
         window.switchPage('list');
       }
-      window.applyFilters();
     });
   };
 
