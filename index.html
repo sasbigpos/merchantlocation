@@ -11,7 +11,6 @@
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Google Maps Tile Layer (using Leaflet) -->
   <!-- Papaparse for CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <!-- Font Awesome icons -->
@@ -350,17 +349,10 @@
       background: #fef2f2;
       color: #b91c1c;
     }
-    /* Scroll highlight animation */
-    @keyframes highlightPulse {
-      0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-      100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-    }
     .map-highlight {
       animation: highlightPulse 1s ease-out;
       border: 2px solid #3b82f6 !important;
     }
-    /* Google Maps attribution */
     .leaflet-control-attribution {
       font-size: 8px !important;
     }
@@ -905,6 +897,8 @@
     } else if (page === 'add') {
       document.getElementById('addPage').classList.remove('hidden');
       document.querySelector('.page-nav button:nth-child(3)').classList.add('active');
+      // CLEAR THE FORM when navigating to Add Customer
+      window.clearForm();
     }
   };
 
@@ -1234,7 +1228,14 @@
     if (isNaN(val) || val < 0) val = 0;
     currentRadius = val;
     document.getElementById('radiusSlider').value = Math.min(val, 100);
+    
     window.applyFilters();
+    
+    if (currentRadius > 0) {
+      window.showToast('📍 Filtering customers within ' + currentRadius + 'km', 2000);
+    } else {
+      window.showToast('📍 Radius filter cleared', 2000);
+    }
   };
 
   window.clearRadius = function() {
@@ -1314,6 +1315,15 @@
       });
     }
     
+    // SORT BY DISTANCE (nearest first)
+    if (currentPosition) {
+      filtered.sort(function(a, b) {
+        var distA = haversine(currentPosition.lat, currentPosition.lng, a.lat, a.lng);
+        var distB = haversine(currentPosition.lat, currentPosition.lng, b.lat, b.lng);
+        return distA - distB;
+      });
+    }
+    
     return filtered;
   }
 
@@ -1343,11 +1353,20 @@
       });
     }
     
+    // SORT BY DISTANCE (nearest first)
+    if (currentPosition) {
+      filtered.sort(function(a, b) {
+        var distA = haversine(currentPosition.lat, currentPosition.lng, a.lat, a.lng);
+        var distB = haversine(currentPosition.lat, currentPosition.lng, b.lat, b.lng);
+        return distA - distB;
+      });
+    }
+    
     return filtered;
   }
 
   function haversine(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 99999;
     var R = 6371;
     var dLat = (lat2 - lat1) * Math.PI / 180;
     var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -1364,9 +1383,12 @@
     
     if (currentRadius > 0 && currentPosition) {
       document.getElementById('radiusCount').textContent = filteredCustomers.length + ' customers within ' + currentRadius + 'km';
+    } else {
+      document.getElementById('radiusCount').textContent = '';
     }
     
     window.renderCustomerTable();
+    window.renderCustomerListSmall();
     window.updateMapMarkers();
   };
 
@@ -1400,7 +1422,6 @@
       var statusLabel = status === 'active' ? '🟢 Active' : '🔴 Inactive';
       var coordsText = (c.lat && c.lng) ? c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) : '⚠️ No coordinates';
       
-      // Calculate distance if current position is available
       var distanceText = '';
       if (currentPosition && c.lat && c.lng) {
         var dist = haversine(currentPosition.lat, currentPosition.lng, c.lat, c.lng);
@@ -1443,10 +1464,8 @@
       return;
     }
     
-    // Switch to map view
     window.switchPage('map');
     
-    // SCROLL TO MAP
     setTimeout(function() {
       var mapElement = document.getElementById('map');
       if (mapElement) {
@@ -1459,20 +1478,17 @@
     }, 300);
     
     setTimeout(function() {
-      // Remove previous highlight
       if (highlightMarker) { 
         map.removeLayer(highlightMarker); 
         highlightMarker = null; 
       }
       
-      // Pan to the customer location with smooth animation
       map.flyTo([customer.lat, customer.lng], 16, {
         duration: 1.5
       });
       
       selectedCustomerId = customerId;
       
-      // Create highlight marker with pulse animation
       var icon = L.divIcon({
         className: 'highlight-marker',
         html: '<div style="background:#2563eb; width:24px; height:24px; border-radius:50%; border:3px solid white; box-shadow: 0 0 0 0 rgba(37,99,235,0.7); animation: pulse 1.5s infinite;"></div><style>@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.7); } 70% { box-shadow: 0 0 0 15px rgba(37,99,235,0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }</style>',
@@ -1482,7 +1498,6 @@
       
       highlightMarker = L.marker([customer.lat, customer.lng], { icon: icon }).addTo(map);
       
-      // Create popup with Waze and Google Maps buttons
       var popupContent = '<div class="popup-business">' + (customer.business || 'Unnamed') + 
         ' <span class="popup-status popup-status-' + (customer.status || 'active') + '">' + (customer.status || 'active').toUpperCase() + '</span>' +
         '</div>' +
@@ -1533,7 +1548,6 @@
     window.renderCustomerListSmall();
   };
 
-  // ====== CHANGE ITEMS PER PAGE FOR MAP VIEW ======
   window.changeItemsPerPageSmall = function() {
     var val = parseInt(document.getElementById('itemsPerPageSmallSelect').value);
     itemsPerPageSmall = val;
@@ -1929,6 +1943,7 @@
     document.getElementById('newStatus').value = 'active';
     document.getElementById('geocodeStatus').textContent = '⏳ Enter address and click geocode';
     document.getElementById('geocodeStatus').className = 'geocode-result geocode-pending';
+    document.getElementById('addCustomerStatus').textContent = '';
   };
 
   window.geocodeAddress = function() {
@@ -2197,21 +2212,12 @@
       var centerLng = currentPosition ? currentPosition.lng : 101.59592;
       map = L.map('map', { center: [centerLat, centerLng], zoom: 13 });
       
-      // GOOGLE MAPS TILE LAYER - This replaces OpenStreetMap!
       L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>',
         maxZoom: 20,
         minZoom: 1
       }).addTo(map);
-      
-      // Optional: Add satellite view option (uncomment to use)
-      // L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      //   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      //   attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>',
-      //   maxZoom: 20,
-      //   minZoom: 1
-      // }).addTo(map);
       
       setTimeout(function() { if (map) map.invalidateSize(); }, 300);
       if (currentPosition) window.updateUserMarker();
@@ -2266,7 +2272,6 @@
           iconAnchor: [8, 8]
         });
         
-        // Create popup content with Waze and Google Maps buttons
         var popupContent = '<div class="popup-business">' + (c.business || 'Unknown') + 
           ' <span class="popup-status popup-status-' + (c.status || 'active') + '">' + (c.status || 'active').toUpperCase() + '</span>' +
           '</div>' +
